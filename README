@@ -34,7 +34,7 @@ ENGAGE
     engage_api.create_map_file(map_file_path, list_info, columns, mappings)
 
 
-  Creating the gzipped CSV file:
+  Creating the gzipped CSV data file:
   
     csv_file_path = 'LIST_DATA.csv.gz'
     users = User.all()
@@ -51,6 +51,21 @@ ENGAGE
     engage_api.login
     engage_api.import_list(map_file_path, csv_file_path)
     engage_api.logout
+
+
+  Grab a list of all the queries in Silverpop and recalculate them. (This is really handy after you
+  update your email list):
+
+    api = Silverpop::Engage.new, []
+    api.login
+
+    doc = Hpricot::XML( api.get_lists(1, 1) ) # Public queries
+    (doc/:LIST).each { |n| api.calculate_query(n.at('ID').innerHTML) }
+
+    doc = Hpricot::XML( api.get_lists(0, 1) ) # Private queries
+    (doc/:LIST).each { |n| api.calculate_query(n.at('ID').innerHTML) }
+
+    api.logout
 
 
   Other:
