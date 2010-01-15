@@ -52,7 +52,31 @@ TRANSACT
 
 ENGAGE
 
-  Please look through the functions in lib/engage.rb
+
+  Creating an import map file:
+
+    map_file_path  = 'LIST.XML'
+
+    list_info = { :action       => 'ADD_AND_UPDATE',
+                  :list_id      => 1234567,
+                  :file_type    => 0,
+                  :has_headers  => true }
+
+    columns   = [ { :name=>'EMAIL',         :type=>9, :is_required=>true,   :key_column=>true },
+                  { :name=>'FIRST_NAME',    :type=>0, :is_required=>false,  :key_column=>false },
+                  { :name=>'LAST_NAME',     :type=>0, :is_required=>false,  :key_column=>false } ]
+
+    mappings  = [ { :index=>1,  :name=>'EMAIL' },
+                  { :index=>2,  :name=>'FIRST_NAME' },
+                  { :index=>3,  :name=>'LAST_NAME' } ]
+
+    engage_api = Silverpop::Engage.new
+    engage_api.create_map_file(map_file_path, list_info, columns, mappings)
+
+
+  Other:
+
+    Please look through the functions in lib/engage.rb
 
 
 Copyright (c) 2010 George Truong, released under the MIT license
