@@ -4,8 +4,8 @@ module Silverpop
 
     API_POST_URL  = 'https://transact3.silverpop.com/XTMail'
     FTP_POST_URL  = 'transfer3.silverpop.com'
-    USERNAME      = 'username'
-    PASSWORD      = 'password'
+    USERNAME      = SILVERPOP_TRANSACT_USERNAME
+    PASSWORD      = SILVERPOP_TRANSACT_PASSWORD
 
     TMP_WORK_PATH = "#{RAILS_ROOT}/tmp/"
 

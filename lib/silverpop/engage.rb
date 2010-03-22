@@ -4,8 +4,8 @@ module Silverpop
 
     API_POST_URL  = 'https://api3.silverpop.com/XMLAPI'
     FTP_POST_URL  = 'transfer3.silverpop.com'
-    USERNAME      = 'username'
-    PASSWORD      = 'password'
+    USERNAME      = SILVERPOP_ENGAGE_USERNAME
+    PASSWORD      = SILVERPOP_ENGAGE_PASSWORD
 
     TMP_WORK_PATH = "#{RAILS_ROOT}/tmp/"
 
