@@ -4,8 +4,14 @@ module Silverpop
 
     API_POST_URL  = 'https://api3.silverpop.com/XMLAPI'
     FTP_POST_URL  = 'transfer3.silverpop.com'
-    USERNAME      = SILVERPOP_ENGAGE_USERNAME
-    PASSWORD      = SILVERPOP_ENGAGE_PASSWORD
+
+    def username
+      Spree::Config[:silverpop_engage_username]
+    end
+
+    def password
+      Spree::Config[:silverpop_engage_password]
+    end
 
     TMP_WORK_PATH = "#{RAILS_ROOT}/tmp/"
 
@@ -50,7 +56,7 @@ module Silverpop
     def login
       @session_id, @session_encoding = nil, nil
 
-      doc = Hpricot::XML( query( xml_login( USERNAME, PASSWORD ) ) )
+      doc = Hpricot::XML( query( xml_login( username, password ) ) )
       if doc.at('SUCCESS').innerHTML.downcase == 'true'
         @session_id       = doc.at('SESSIONID').innerHTML
         @session_encoding = doc.at('SESSION_ENCODING').innerHTML
@@ -100,7 +106,7 @@ module Silverpop
     def import_list(map_file_path, source_file_path)
       Net::FTP.open(FTP_POST_URL) do |ftp|
         ftp.passive = true  # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
-        ftp.login(USERNAME, PASSWORD)
+        ftp.login(username, password)
         ftp.chdir('upload')
         ftp.puttextfile(map_file_path)
         ftp.puttextfile(source_file_path)

@@ -4,9 +4,14 @@ module Silverpop
 
     API_POST_URL  = 'https://transact3.silverpop.com/XTMail'
     FTP_POST_URL  = 'transfer3.silverpop.com'
-    USERNAME      = SILVERPOP_TRANSACT_USERNAME
-    PASSWORD      = SILVERPOP_TRANSACT_PASSWORD
 
+    def username
+      Spree::Config[:silverpop_transact_username]
+    end
+
+    def password
+      Spree::Config[:silverpop_transact_password]
+    end
     TMP_WORK_PATH = "#{RAILS_ROOT}/tmp/"
 
     def initialize(campaign_id, recipients=[], options={})
@@ -31,7 +36,7 @@ module Silverpop
     end
 
     def submit_batch(batch_file_path)
-      Net::FTP.open(FTP_POST_URL, USERNAME, PASSWORD) do |ftp|
+      Net::FTP.open(FTP_POST_URL, username, password) do |ftp|
         ftp.passive = true  # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
         ftp.chdir('transact')
         ftp.chdir('inbound')
