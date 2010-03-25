@@ -1,6 +1,6 @@
 module Silverpop
 
-  class Core
+  class Base
 
     cattr_accessor :logger
     self.logger = RAILS_DEFAULT_LOGGER
