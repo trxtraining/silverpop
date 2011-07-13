@@ -1,12 +1,12 @@
 Gem::Specification.new do |s|
   s.name     = "silverpop"
-  s.version  = "1.0.0"
-  s.date     = "2010-01-14"
-  s.summary  = "Silverpop Engage and Transact API -- Extracted from ShoeDazzle.com"
-  s.email    = "george@georgetruong.com"
-  s.homepage = "http://github.com/georgetruong/silverpop/tree/master"
+  s.version  = "1.1.0"
+  s.date     = "2011-07-13"
+  s.summary  = "Silverpop Engage and Transact API -- Extracted from ShoeDazzle.com, gemified by Billfloat"
+  s.email    = "bill@billfloat.com"
+  s.homepage = "http://github.com/billfloat/silverpop/tree/master"
   s.description = "Silverpop allows for seamless integration from Ruby with the Engage and Transact API."
-  s.authors  = ["George Truong"]
+  s.authors  = ["George Truong, Bill Abney"]
 
   s.has_rdoc = false
   s.rdoc_options = ["--main", "README"]
@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
     init.rb
     install.rb
     lib/silverpop.rb
-    lib/silverpop/core.rb
+    lib/silverpop/base.rb
     lib/silverpop/engage.rb
     lib/silverpop/transact.rb
     tasks/silverpop_tasks.rake
