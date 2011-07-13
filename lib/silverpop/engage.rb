@@ -2,16 +2,16 @@ module Silverpop
 
   class Engage < Silverpop::Base
 
-    API_POST_URL  = 'https://api3.silverpop.com/XMLAPI'
-    FTP_POST_URL  = 'transfer3.silverpop.com'
+    API_POST_URL  = "https://api#{SILVERPOP_POD}.silverpop.com/XMLAPI"
+    FTP_POST_URL  = "transfer#{SILVERPOP_POD}.silverpop.com"
         TMP_WORK_PATH = "#{RAILS_ROOT}/tmp/"
 
     def username
-      Spree::Config[:silverpop_engage_username]
+      SILVERPOP_ENGAGE_USERNAME
     end
 
     def password
-      Spree::Config[:silverpop_engage_password]
+      SILVERPOP_ENGAGE_PASSWORD
     end
 
     def initialize()

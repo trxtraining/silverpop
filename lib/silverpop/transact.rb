@@ -2,16 +2,16 @@ module Silverpop
 
   class Transact < Silverpop::Base
 
-    API_POST_URL  = 'https://transact3.silverpop.com/XTMail'
-    FTP_POST_URL  = 'transfer3.silverpop.com'
+    API_POST_URL  = "https://transact#{SILVERPOP_POD}.silverpop.com/XTMail"
+    FTP_POST_URL  = "transfer#{SILVERPOP_POD}.silverpop.com"
     TMP_WORK_PATH = "#{RAILS_ROOT}/tmp/"
 
     def username
-      Spree::Config[:silverpop_transact_username]
+      SILVERPOP_TRANSACT_USERNAME
     end
 
     def password
-      Spree::Config[:silverpop_transact_password]
+      SILVERPOP_TRANSACT_PASSWORD
     end
 
     def initialize(campaign_id, recipients=[], options={})
