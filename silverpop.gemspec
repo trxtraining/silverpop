@@ -23,6 +23,7 @@ Gem::Specification.new do |s|
     lib/silverpop/base.rb
     lib/silverpop/engage.rb
     lib/silverpop/transact.rb
+    lib/silverpop/silverpop_mailer.rb
     tasks/silverpop_tasks.rake
     test/silverpop_test.rb
     uninstall.rb
