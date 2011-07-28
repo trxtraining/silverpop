@@ -15,7 +15,7 @@ module Silverpop
       http.use_ssl  = true
       http.start do |http|
         path = url.path + session_encoding
-        resp = http.post path, 'xml=%s' % xml
+        resp = http.post path, xml, {'Content-type' => 'text/xml'}
       end
       resp = resp.body
     end
