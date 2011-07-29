@@ -40,12 +40,12 @@ class SilverpopMailer
     puts "finished after callbacks!"
     return true #TODO return false if email did not send
   end
-  def create(method, *args)
+  def initialize(method, *args)
     puts "about to send #{method} #{args} to #{self.inspect}"
     self.send(method, *args)
     puts "campaign_id is #{@campaign_id}"
     puts "email is #{@recipient}"
-    @mail = Silverpop::Transact.new(campaign_id, [{:email => recipient, :personalizations => personalizations}])
+    @mail = Silverpop::Transact.new(campaign_id, [{:email => recipient, :personalizations => flat_hash_to_personalizations(personalizations)}])
     self
   end
   
@@ -56,15 +56,15 @@ class SilverpopMailer
       # class_eval %{
       #   def #{name}
       #     puts "creating!"
-      #     mailer = new.create(:#{creator.to_sym})
+      #     mailer = new.create(:#{creator.to_sym}, *args)
       #     puts "delivering!"
       #     mailer.deliver!
       #   end
       # }, __FILE__, __LINE__
       # puts "calling method #{name}"
       # self.send(name)
-      puts "creating! new.create(:#{creator})"
-      mailer = new.create(creator.to_sym, *args)
+      puts "creating! new.create(:#{creator}, #{args})"
+      mailer = new(creator.to_sym, *args)
       puts "mailer is #{mailer.inspect}"
       puts "delivering!"
       mailer.deliver!
@@ -72,7 +72,7 @@ class SilverpopMailer
       super
     end
   end
-  def respond_to?
+  def respond_to?(name)
     if name.to_s.match(/^deliver/)
       true
     else
@@ -80,4 +80,13 @@ class SilverpopMailer
     end
   end
   
+  protected
+    def flat_hash_to_personalizations(hash)
+      #personalizations = [{:tag_name => "BILL_FLOAT_TEST_BODY", :value => "<![CDATA[This is the <b>body</b> of the email.]]>"}]
+      personalizations = []
+      hash.each_pair do |k,v|
+        personalizations << {:tag_name => k.to_s, :value => v}
+      end
+      personalizations
+    end
 end
