@@ -1,30 +1,29 @@
 class SilverpopMailer
   # sends to one recipient at a time for now
   attr_accessor :subject, :recipient, :campaign_id, :personalizations
+  @@before_deliver_methods = []
+  @@after_deliver_methods = []
   # some braindead callbacks. before_deliver methods will halt and not send if any callback returns false.
   # after_deliver methods just run and don't care what happens.
   def self.before_deliver(*methods)
-    @before_deliver_methods = methods
+    @@before_deliver_methods = methods
   end
   def self.after_deliver(*methods)
-    @after_deliver_methods = methods
+    @@after_deliver_methods = methods
   end
   def before_deliver_callbacks
-    if @before_deliver_callbacks
-      @before_deliver_callbacks.each do |method|
-        result = self.send(method)
-        if result == false
-          return false
-        end
+    puts "before deliver callbacks are #{@@before_deliver_methods}"
+    @@before_deliver_methods.each do |method|
+      result = self.send(method)
+      if result == false
+        return false
       end
     end
     return true
   end
   def after_deliver_callbacks
-    if @after_deliver_callbacks
-      @after_deliver_callbacks.each do |method|
-        self.send(method)
-      end
+    @@after_deliver_methods.each do |method|
+      self.send(method)
     end
     return true
   end
