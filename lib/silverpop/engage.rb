@@ -178,6 +178,10 @@ module Silverpop
     def opt_out_recipient(list_id, email)
       response_xml = query xml_opt_out_recipient(list_id, email)
     end
+    
+    def insert_update_relational_data(list_id, data)
+      response_xml = query xml_insert_update_relational_data(list_id, data)
+    end
 
   ###
   #   API XML TEMPLATES
@@ -440,6 +444,40 @@ module Silverpop
           '</OptOutRecipient>'+
         '</Body></Envelope>'
       ) % [list_id, email]
+    end
+    
+    def xml_insert_update_relational_data(table_id, data)
+      ( '<Envelope><Body>'+
+          '<InsertUpdateRelationalTable>'+
+            '<TABLE_ID>%s</TABLE_ID>'+
+            '<ROWS>%s</ROWS>'+
+          '</InsertUpdateRelationalTable>'+
+        '</Body></Envelope>'
+      ) % [table_id, xml_add_relational_rows(data)]
+    end
+    
+    def xml_add_relational_rows(data)
+      rows = ''
+      data.each do |row|
+        row = ('<ROW>'+
+          '%s'+
+          '</ROW>'
+        ) % xml_add_relational_row(row)
+        rows << row
+      end
+      rows
+    end
+    
+    def xml_add_relational_row(row_data)
+      row = ''
+      row_data.each do |column|
+        col = ( '<COLUMN name="%s">'+
+            '<![CDATA[%s]]>'+
+          '</COLUMN>'
+        ) % [column[:name], column[:value]]
+        row << col 
+      end
+      row
     end
 
   end

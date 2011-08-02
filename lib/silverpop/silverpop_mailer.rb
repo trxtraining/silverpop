@@ -51,17 +51,17 @@ class SilverpopMailer
   def self.method_missing(name, *args)
     if name.to_s.match(/^deliver_/)
       creator = name.to_s.sub("deliver_", "")
-      # puts "creating method #{name} as #{method}"
+      # puts "creating method self.#{name}"
       # class_eval %{
-      #   def #{name}
-      #     puts "creating!"
+      #   def self.#{name}
+      #     puts "creating! new.create(:#{creator}, #{args})"
       #     mailer = new.create(:#{creator.to_sym}, *args)
       #     puts "delivering!"
       #     mailer.deliver!
       #   end
       # }, __FILE__, __LINE__
       # puts "calling method #{name}"
-      # self.send(name)
+      # send(name)
       puts "creating! new.create(:#{creator}, #{args})"
       mailer = new(creator.to_sym, *args)
       puts "mailer is #{mailer.inspect}"
