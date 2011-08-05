@@ -5,7 +5,23 @@ module Silverpop
     API_POST_URL  = "https://api#{SILVERPOP_POD}.silverpop.com/XMLAPI"
     FTP_POST_URL  = "transfer#{SILVERPOP_POD}.silverpop.com"
         TMP_WORK_PATH = "#{RAILS_ROOT}/tmp/"
-
+    
+    def map_type(type)
+      {
+        :text=> 0,
+        :yes_no => 1,
+        :numeric => 2,
+        :date => 3,
+        :time => 4,
+        :country => 5,
+        :select_one => 6,
+        :segmenting => 8,
+        :system => 9,
+        :timestamp => 17,
+        :multi_select => 20
+      }[type]
+    end
+    
     def username
       SILVERPOP_ENGAGE_USERNAME
     end
@@ -182,7 +198,14 @@ module Silverpop
     def insert_update_relational_data(list_id, data)
       response_xml = query xml_insert_update_relational_data(list_id, data)
     end
-
+    
+    def create_relational_table(schema)
+      response_xml = query xml_create_relational_table(schema)
+    end
+    
+    def associate_relational_table(list_id, table_name, field_mappings)
+      response_xml = query xml_associate_relational_table(list_id, table_id, field_mappings)
+    end
   ###
   #   API XML TEMPLATES
   ###
@@ -479,7 +502,66 @@ module Silverpop
       end
       row
     end
+    
+    def xml_create_relational_table(schema)
+      xml = ('<Envelope><Body>'+
+        '<CreateTable>'+
+          '<TABLE_NAME>%s</TABLE_NAME>'+
+          '<COLUMNS></COLUMNS>'+
+        '</CreateTable>'+
+      '</Body></Envelope>') % [schema[:table_name]]
 
+      doc = Hpricot::XML(xml)
+      if schema[:columns].size > 0
+        schema[:columns].each do |c|
+          element = doc/:COLUMNS
+          if element.innerHTML.empty?
+            (doc/:COLUMNS).innerHTML= xml_add_relational_table_column(c)
+          else
+            (doc/:COLUMNS).append xml_add_relational_table_column(c)
+          end
+        end
+      end
+
+      doc.to_s
+      
+    end
+    
+    def xml_add_relational_table_column(col)
+      xml = "<COLUMN>"
+      xml << "<NAME>%s</NAME>" % [col[:name]] if col[:name]
+      xml << "<TYPE>%s</TYPE>" % [map_type(col[:type])] if col[:type]
+      xml << "<IS_REQUIRED>%s</IS_REQUIRED>" % [col[:is_required]] if col[:is_required]
+      xml << "<KEY_COLUMN>%s</KEY_COLUMN>" % [col[:key_column]] if col[:key_column]
+      xml << "</COLUMN>"
+    end
+    
+    def xml_associate_relational_table(list_id, table_name, field_mappings)
+      xml = ('<Envelope><Body>'+
+        '<JoinTable>'+
+          '<TABLE_NAME>%s</TABLE_NAME>'+
+          '<LIST_ID>%s</LIST_ID>'+
+        '</JoinTable>'+
+      '</Body></Envelope>') % [table_name, list_id]
+      
+      doc = Hpricot::XML(xml)
+      if field_mappings.size > 0
+        field_mappings.each do |m|
+          (doc/:JoinTable).append xml_add_relational_table_mapping(m)
+        end
+      end
+
+      doc.to_s
+      
+    end
+    
+    def xml_add_relational_table_mapping(mapping)
+      ('<MAP_FIELD>'+
+        '<LIST_FIELD>%s</LIST_FIELD>'+
+        '<TABLE_FIELD>%s</TABLE_FIELD>'+
+      '</MAP_FIELD>') % [mapping[:list_name], mapping[:table_name]]
+    end
+    
   end
 
 end
