@@ -4,23 +4,7 @@ module Silverpop
 
     API_POST_URL  = "https://api#{SILVERPOP_POD}.silverpop.com/XMLAPI"
     FTP_POST_URL  = "transfer#{SILVERPOP_POD}.silverpop.com"
-        TMP_WORK_PATH = "#{RAILS_ROOT}/tmp/"
-    
-    def map_type(type)
-      {
-        :text=> 0,
-        :yes_no => 1,
-        :numeric => 2,
-        :date => 3,
-        :time => 4,
-        :country => 5,
-        :select_one => 6,
-        :segmenting => 8,
-        :system => 9,
-        :timestamp => 17,
-        :multi_select => 20
-      }[type]
-    end
+    TMP_WORK_PATH = "#{RAILS_ROOT}/tmp/"
     
     def username
       SILVERPOP_ENGAGE_USERNAME
@@ -135,6 +119,23 @@ module Silverpop
                               File.basename(source_file_path) )
     end
     
+    def import_table(map_file_path, source_file_path)
+      Net::FTP.open(FTP_POST_URL) do |ftp|
+        ftp.passive = true  # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
+        ftp.login(username, password)
+        ftp.chdir('upload')
+        ftp.puttextfile(map_file_path)
+        ftp.puttextfile(source_file_path)
+      end
+
+      map_file_ftp_path = File.basename(map_file_path)
+      source_file_ftp_path = File.basename(source_file_path)
+
+      response_xml = query xml_import_table(
+                              File.basename(map_file_path),
+                              File.basename(source_file_path) )
+    end
+    
     def create_map_file (file_path, list_info, columns, mappings)
       # SAMPLE_PARAMS:
       # list_info = { :action       => 'ADD_AND_UPDATE',
@@ -203,13 +204,27 @@ module Silverpop
       response_xml = query xml_create_relational_table(schema)
     end
     
-    def associate_relational_table(list_id, table_name, field_mappings)
+    def associate_relational_table(list_id, table_id, field_mappings)
       response_xml = query xml_associate_relational_table(list_id, table_id, field_mappings)
     end
   ###
   #   API XML TEMPLATES
   ###
   protected
+  
+    def map_type(type) # some API calls want a number, some want a name. This maps the name back to the number
+      {
+      "TEXT" => 0,
+      "YESNO" => 1,
+      "NUMERIC" => 2,
+      "DATE" => 3,
+      "TIME" => 4,
+      "COUNTRY" => 5,
+      "SELECTION" => 6,
+      "SEGMENTING" => 8,
+      "EMAIL" => 9
+      }[type]
+    end
 
     def log_error
       logger.debug '*** Silverpop::Engage Error: ' + error_message
@@ -273,7 +288,17 @@ module Silverpop
       ) % [map_file, source_file]
     end
     
-    def xml_map_file(list_info, columns, mappings)
+    def xml_import_table(map_file, source_file)
+      ( '<Envelope><Body>'+
+          '<ImportTable>'+
+            '<MAP_FILE>%s</MAP_FILE>'+
+            '<SOURCE_FILE>%s</SOURCE_FILE>'+
+          '</ImportTable>'+
+        '</Body></Envelope>'
+      ) % [map_file, source_file]
+    end
+    
+    def xml_map_file(list_info, columns, mappings, type="list")
       return false unless (columns.size > 0 && mappings.size > 0)
 
       xml = '<LIST_IMPORT>'+
@@ -530,19 +555,19 @@ module Silverpop
     def xml_add_relational_table_column(col)
       xml = "<COLUMN>"
       xml << "<NAME>%s</NAME>" % [col[:name]] if col[:name]
-      xml << "<TYPE>%s</TYPE>" % [map_type(col[:type])] if col[:type]
+      xml << "<TYPE>%s</TYPE>" % [col[:type]] if col[:type]
       xml << "<IS_REQUIRED>%s</IS_REQUIRED>" % [col[:is_required]] if col[:is_required]
       xml << "<KEY_COLUMN>%s</KEY_COLUMN>" % [col[:key_column]] if col[:key_column]
       xml << "</COLUMN>"
     end
     
-    def xml_associate_relational_table(list_id, table_name, field_mappings)
+    def xml_associate_relational_table(list_id, table_id, field_mappings)
       xml = ('<Envelope><Body>'+
         '<JoinTable>'+
-          '<TABLE_NAME>%s</TABLE_NAME>'+
+          '<TABLE_ID>%s</TABLE_ID>'+
           '<LIST_ID>%s</LIST_ID>'+
         '</JoinTable>'+
-      '</Body></Envelope>') % [table_name, list_id]
+      '</Body></Envelope>') % [table_id, list_id]
       
       doc = Hpricot::XML(xml)
       if field_mappings.size > 0
