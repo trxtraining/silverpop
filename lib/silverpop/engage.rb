@@ -13,6 +13,14 @@ module Silverpop
     def password
       SILVERPOP_ENGAGE_PASSWORD
     end
+    
+    def ftp_username # not necessarily the same as the API login
+      SILVERPOP_ENGAGE_FTP_USERNAME
+    end
+    
+    def ftp_password
+      SILVERPOP_ENGAGE_FTP_PASSWORD
+    end
 
     def initialize()
       super API_POST_URL
@@ -95,6 +103,8 @@ module Silverpop
       # * 5 – Test Lists
       # * 6 – Seed Lists
       # * 13 – Suppression Lists
+      # * 15 – Relational Tables
+      # * 18 – Contact Lists
       response_xml = query( xml_get_lists(visibility, list_type) )
     end
 
@@ -105,7 +115,7 @@ module Silverpop
     def import_list(map_file_path, source_file_path)
       Net::FTP.open(FTP_POST_URL) do |ftp|
         ftp.passive = true  # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
-        ftp.login(username, password)
+        ftp.login(ftp_username, ftp_password)
         ftp.chdir('upload')
         ftp.puttextfile(map_file_path)
         ftp.puttextfile(source_file_path)
@@ -122,7 +132,7 @@ module Silverpop
     def import_table(map_file_path, source_file_path)
       Net::FTP.open(FTP_POST_URL) do |ftp|
         ftp.passive = true  # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
-        ftp.login(username, password)
+        ftp.login(ftp_username, ftp_password)
         ftp.chdir('upload')
         ftp.puttextfile(map_file_path)
         ftp.puttextfile(source_file_path)
