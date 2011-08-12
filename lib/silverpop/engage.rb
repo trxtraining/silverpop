@@ -146,7 +146,7 @@ module Silverpop
                               File.basename(source_file_path) )
     end
     
-    def create_map_file (file_path, list_info, columns, mappings)
+    def create_map_file (file_path, list_info, columns, mappings, type = "LIST")
       # SAMPLE_PARAMS:
       # list_info = { :action       => 'ADD_AND_UPDATE',
       #               :list_id      => 123456,
@@ -160,7 +160,7 @@ module Silverpop
       #               { :index=>3, :name=>'LAST_NAME', :include=>true } ]
 
       File.open(file_path, 'w') do |file|
-        file.puts xml_map_file(list_info, columns, mappings)
+        file.puts xml_map_file(list_info, columns, mappings, type)
       end
 
       file_path
@@ -308,17 +308,17 @@ module Silverpop
       ) % [map_file, source_file]
     end
     
-    def xml_map_file(list_info, columns, mappings, type="list")
+    def xml_map_file(list_info, columns, mappings, type="LIST")
       return false unless (columns.size > 0 && mappings.size > 0)
 
-      xml = '<LIST_IMPORT>'+
-              '<LIST_INFO></LIST_INFO>'+
+      xml = "<#{type}_IMPORT>"+
+              "<#{type}_INFO></#{type}_INFO>"+
               '<COLUMNS></COLUMNS>'+
               '<MAPPING></MAPPING>'+
-            '</LIST_IMPORT>'
+            "</#{type}_IMPORT>"
 
       doc = Hpricot::XML(xml)
-      doc.at('LIST_INFO').innerHTML = xml_map_file_list_info(list_info)
+      doc.at("#{type}_INFO").innerHTML = xml_map_file_list_info(list_info, type)
 
       str = ''
       columns.each { |c| str += xml_map_file_column(c) }
@@ -331,7 +331,7 @@ module Silverpop
       doc.to_s
     end
 
-    def xml_map_file_list_info(list_info)
+    def xml_map_file_list_info(list_info, type = "LIST")
       # ACTION:
       #   Defines the type of list import you are performing. The following is a
       #   list of valid values and how interprets them:
@@ -360,15 +360,18 @@ module Silverpop
       #   file contains column definitions. The List Import API does not use
       #   these headers, so if you have them, this element must be set to true
       #   so it can skip the first line.
-
       ( '<ACTION>%s</ACTION>'+
-        '<LIST_ID>%s</LIST_ID>'+
+        "<#{type}_NAME>%s</#{type}_NAME>"+
+        "<#{type}_ID>%s</#{type}_ID>"+
         '<FILE_TYPE>%s</FILE_TYPE>'+
-        '<HASHEADERS>%s</HASHEADERS>'
+        '<HASHEADERS>%s</HASHEADERS>'+
+        "<#{type}_VISIBILITY>%s</#{type}_VISIBILITY>"
       ) % [ list_info[:action],
+            list_info[:list_name],
             list_info[:list_id],
             list_info[:file_type],
-            list_info[:has_headers] ]
+            list_info[:has_headers],
+            list_info[:list_visibility] ]
     end
 
     def xml_map_file_column(column)
