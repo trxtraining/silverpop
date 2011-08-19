@@ -206,8 +206,8 @@ module Silverpop
       response_xml = query xml_opt_out_recipient(list_id, email)
     end
     
-    def insert_update_relational_data(list_id, data)
-      response_xml = query xml_insert_update_relational_data(list_id, data)
+    def insert_update_relational_data(table_id, data)
+      response_xml = query xml_insert_update_relational_data(table_id, data)
     end
     
     def create_relational_table(schema)
