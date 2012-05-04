@@ -7,14 +7,18 @@ module Silverpop
     TMP_WORK_PATH = "#{RAILS_ROOT}/tmp/"
 
     def username
+      # Rails.logger.warn "username: #{SILVERPOP_TRANSACT_USERNAME}"
       SILVERPOP_TRANSACT_USERNAME
     end
 
     def password
+      # Rails.logger.warn "password: #{SILVERPOP_TRANSACT_PASSWORD}"
       SILVERPOP_TRANSACT_PASSWORD
     end
 
     def initialize(campaign_id, recipients=[], options={})
+      # Rails.logger.warn "initialize(campaign_id: #{campaign_id}, recipients: #{recipients}, options: #{options})"
+
       super API_POST_URL
       @query_doc, @response_doc = nil, nil
       xml_template(campaign_id, recipients, options)
@@ -31,6 +35,9 @@ module Silverpop
     end
 
     def query
+      # Rails.logger.warn "username: #{SILVERPOP_TRANSACT_USERNAME}"
+      # Rails.logger.warn "password: #{SILVERPOP_TRANSACT_PASSWORD}"
+
       @response_doc = Hpricot::XML( super(@query_doc.to_s) )
       log_error unless success?
     end
@@ -46,7 +53,7 @@ module Silverpop
     end
 
     def save_xml(file_path)
-      File.open(file_path, 'w') do |f|  
+      File.open(file_path, 'w') do |f|
         f.puts query_xml
         f.close
       end
@@ -66,7 +73,7 @@ module Silverpop
 
     def add_recipient(recipient)
       return if recipient.blank?
-      
+
       r_xml = xml_recipient recipient[:email]
       if recipient[:personalizations].size > 0
         r_xml = add_personalizations r_xml, recipient[:personalizations]
@@ -74,7 +81,7 @@ module Silverpop
 
       (@query_doc/:XTMAILING).append r_xml
     end
-    
+
     def add_recipients(recipients)
       return if recipients.blank?
 
@@ -86,7 +93,7 @@ module Silverpop
         end
         recipients_xml += r_xml
       end
-      
+
       (@query_doc/:XTMAILING).append recipients_xml
     end
 
@@ -101,7 +108,9 @@ module Silverpop
   protected
 
     def log_error
-      logger.debug '*** Silverpop::Transact Error: ' + error_message
+      logger.error "Silverpop::Transact Error:   #{error_message}"
+      logger.warn "@xml:\n#{@xml.inspect}"
+      logger.info "@query_doc:\n#{@query_doc.inspect}"
     end
 
     def xml_template(campaign_id, recipients=[], options={})
@@ -111,7 +120,7 @@ module Silverpop
             :no_retry_on_failure  => 'false'
           }.merge options
 
-      xml = ( 
+      @xml = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+"\n"+
         '<XTMAILING>'+"\n"+
           '<CAMPAIGN_ID>%s</CAMPAIGN_ID>'+"\n"+
@@ -123,17 +132,20 @@ module Silverpop
             o[:show_all_send_detail],
             o[:send_as_batch],
             o[:no_retry_on_failure] ]
-      @query_doc = Hpricot::XML(xml)
+      @query_doc = Hpricot::XML(@xml)
 
       unless o[:transaction_id].blank?
         (@query_doc/:XTMAILING).append(
             '<TRANSACTION_ID>%s</TRANSACTION_ID>' % o[:transaction_id] )
       end
-      
+
+      Rails.logger.warn "add_recipients(#{recipients.inspect})"
       add_recipients recipients
     end
 
     def xml_recipient(email)
+      Rails.logger.warn "xml_recipient(#{email.inspect})"
+
       ( "\n" + '<RECIPIENT>'+
           '<EMAIL>%s</EMAIL>'+
           '<BODY_TYPE>HTML</BODY_TYPE>'+
@@ -142,13 +154,20 @@ module Silverpop
     end
 
     def xml_recipient_personalization(personalization)
-      ( '<PERSONALIZATION>'+
-          '<TAG_NAME>%s</TAG_NAME>'+
-          '<VALUE>%s</VALUE>'+
-        '</PERSONALIZATION>'
-      ) % [ personalization[:tag_name], personalization[:value] ]
+      Rails.logger.warn "xml_recipient_personalization(#{personalization.inspect})"
+
+      tag_name = personalization[:tag_name]
+      value = personalization[:value]
+
+result = "<PERSONALIZATION>
+  <TAG_NAME>#{tag_name}</TAG_NAME>
+  <VALUE>#{value}</VALUE>
+</PERSONALIZATION>"
+
+      # Rails.logger.warn "#{result.inspect}"
+      result
     end
-    
+
   end
 
 end

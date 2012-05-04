@@ -5,7 +5,7 @@ module Silverpop
     API_POST_URL  = "https://api#{SILVERPOP_POD}.silverpop.com/XMLAPI"
     FTP_POST_URL  = "transfer#{SILVERPOP_POD}.silverpop.com"
     TMP_WORK_PATH = "#{RAILS_ROOT}/tmp/"
-    
+
     def username
       SILVERPOP_ENGAGE_USERNAME
     end
@@ -13,11 +13,11 @@ module Silverpop
     def password
       SILVERPOP_ENGAGE_PASSWORD
     end
-    
+
     def ftp_username # not necessarily the same as the API login
       SILVERPOP_ENGAGE_FTP_USERNAME
     end
-    
+
     def ftp_password
       SILVERPOP_ENGAGE_FTP_PASSWORD
     end
@@ -90,7 +90,7 @@ module Silverpop
     #   LIST MANAGEMENT
     ###
     def get_lists(visibility, list_type)
-      # VISIBILITY 
+      # VISIBILITY
       # Required. Defines the visibility of the lists to return.
       # * 0 – Private
       # * 1 – Shared
@@ -128,7 +128,7 @@ module Silverpop
                               File.basename(map_file_path),
                               File.basename(source_file_path) )
     end
-    
+
     def import_table(map_file_path, source_file_path)
       Net::FTP.open(FTP_POST_URL) do |ftp|
         ftp.passive = true  # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
@@ -145,7 +145,7 @@ module Silverpop
                               File.basename(map_file_path),
                               File.basename(source_file_path) )
     end
-    
+
     def create_map_file (file_path, list_info, columns, mappings, type = "LIST")
       # SAMPLE_PARAMS:
       # list_info = { :action       => 'ADD_AND_UPDATE',
@@ -205,18 +205,19 @@ module Silverpop
     def opt_out_recipient(list_id, email)
       response_xml = query xml_opt_out_recipient(list_id, email)
     end
-    
+
     def insert_update_relational_data(table_id, data)
       response_xml = query xml_insert_update_relational_data(table_id, data)
     end
-    
+
     def create_relational_table(schema)
       response_xml = query xml_create_relational_table(schema)
     end
-    
+
     def associate_relational_table(list_id, table_id, field_mappings)
       response_xml = query xml_associate_relational_table(list_id, table_id, field_mappings)
     end
+
   ###
   #   API XML TEMPLATES
   ###
@@ -297,7 +298,7 @@ module Silverpop
         '</Body></Envelope>'
       ) % [map_file, source_file]
     end
-    
+
     def xml_import_table(map_file, source_file)
       ( '<Envelope><Body>'+
           '<ImportTable>'+
@@ -307,7 +308,7 @@ module Silverpop
         '</Body></Envelope>'
       ) % [map_file, source_file]
     end
-    
+
     def xml_map_file(list_info, columns, mappings, type="LIST")
       return false unless (columns.size > 0 && mappings.size > 0)
 
@@ -354,7 +355,7 @@ module Silverpop
       # FILE_TYPE:
       #   Defines the formatting of the source file. Supported values are:
       #   0 – CSV file, 1 – Tab-separated file, 2 – Pipe-separated file
-      
+
       # HASHEADERS
       #   The HASHEADERS element is set to true if the first line in the source
       #   file contains column definitions. The List Import API does not use
@@ -407,7 +408,7 @@ module Silverpop
 
     def xml_map_file_mapping_column(column)
       column = { :include => true }.merge(column)
-      
+
       ( '<COLUMN>'+
           '<INDEX>%s</INDEX>'+
           '<NAME>%s</NAME>'+
@@ -506,7 +507,7 @@ module Silverpop
         '</Body></Envelope>'
       ) % [list_id, email]
     end
-    
+
     def xml_insert_update_relational_data(table_id, data)
       ( '<Envelope><Body>'+
           '<InsertUpdateRelationalTable>'+
@@ -516,7 +517,7 @@ module Silverpop
         '</Body></Envelope>'
       ) % [table_id, xml_add_relational_rows(data)]
     end
-    
+
     def xml_add_relational_rows(data)
       rows = ''
       data.each do |row|
@@ -528,7 +529,7 @@ module Silverpop
       end
       rows
     end
-    
+
     def xml_add_relational_row(row_data)
       row = ''
       row_data.each do |column|
@@ -536,11 +537,11 @@ module Silverpop
             '<![CDATA[%s]]>'+
           '</COLUMN>'
         ) % [column[:name], column[:value]]
-        row << col 
+        row << col
       end
       row
     end
-    
+
     def xml_create_relational_table(schema)
       xml = ('<Envelope><Body>'+
         '<CreateTable>'+
@@ -562,9 +563,9 @@ module Silverpop
       end
 
       doc.to_s
-      
+
     end
-    
+
     def xml_add_relational_table_column(col)
       xml = "<COLUMN>"
       xml << "<NAME>%s</NAME>" % [col[:name]] if col[:name]
@@ -573,7 +574,7 @@ module Silverpop
       xml << "<KEY_COLUMN>%s</KEY_COLUMN>" % [col[:key_column]] if col[:key_column]
       xml << "</COLUMN>"
     end
-    
+
     def xml_associate_relational_table(list_id, table_id, field_mappings)
       xml = ('<Envelope><Body>'+
         '<JoinTable>'+
@@ -581,7 +582,7 @@ module Silverpop
           '<LIST_ID>%s</LIST_ID>'+
         '</JoinTable>'+
       '</Body></Envelope>') % [table_id, list_id]
-      
+
       doc = Hpricot::XML(xml)
       if field_mappings.size > 0
         field_mappings.each do |m|
@@ -590,16 +591,16 @@ module Silverpop
       end
 
       doc.to_s
-      
+
     end
-    
+
     def xml_add_relational_table_mapping(mapping)
       ('<MAP_FIELD>'+
         '<LIST_FIELD>%s</LIST_FIELD>'+
         '<TABLE_FIELD>%s</TABLE_FIELD>'+
       '</MAP_FIELD>') % [mapping[:list_name], mapping[:table_name]]
     end
-    
+
   end
 
 end
