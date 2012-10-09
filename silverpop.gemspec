@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name     = "silverpop"
-  s.version  = "1.0.0"
+  s.version  = "1.1.1"
   s.date     = "2010-01-14"
   s.summary  = "Silverpop Engage and Transact API -- Extracted from ShoeDazzle.com"
   s.email    = "george@georgetruong.com"
