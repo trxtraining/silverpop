@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
     init.rb
     install.rb
     lib/silverpop.rb
-    lib/silverpop/core.rb
+    lib/silverpop/base.rb
     lib/silverpop/engage.rb
     lib/silverpop/transact.rb
     tasks/silverpop_tasks.rake
