@@ -4,30 +4,10 @@ module Silverpop
 
   class Engage < Silverpop::Base
 
-    API_POST_URL  = "https://api#{SILVERPOP_POD}.silverpop.com/XMLAPI"
-    FTP_POST_URL  = "transfer#{SILVERPOP_POD}.silverpop.com"
-    FTP_PORT      = nil # nead for testing
-    TMP_WORK_PATH = "#{RAILS_ROOT}/tmp/"
-
-    def username
-      SILVERPOP_ENGAGE_USERNAME
-    end
-
-    def password
-      SILVERPOP_ENGAGE_PASSWORD
-    end
-
-    def ftp_username # not necessarily the same as the API login
-      SILVERPOP_ENGAGE_FTP_USERNAME
-    end
-
-    def ftp_password
-      SILVERPOP_ENGAGE_FTP_PASSWORD
-    end
-
-    def initialize()
-      super API_POST_URL
+    def initialize(pod, username, password, ftp_username, ftp_password)
+      @url = "https://api#{pod}.silverpop.com/XMLAPI"
       @session_id, @session_encoding, @response_xml = nil, nil, nil
+      super
     end
 
     ###
@@ -250,15 +230,15 @@ module Silverpop
   
     def map_type(type) # some API calls want a number, some want a name. This maps the name back to the number
       {
-      "TEXT" => 0,
-      "YESNO" => 1,
-      "NUMERIC" => 2,
-      "DATE" => 3,
-      "TIME" => 4,
-      "COUNTRY" => 5,
-      "SELECTION" => 6,
-      "SEGMENTING" => 8,
-      "EMAIL" => 9
+        "TEXT" => 0,
+        "YESNO" => 1,
+        "NUMERIC" => 2,
+        "DATE" => 3,
+        "TIME" => 4,
+        "COUNTRY" => 5,
+        "SELECTION" => 6,
+        "SEGMENTING" => 8,
+        "EMAIL" => 9
       }[type]
     end
 
@@ -603,7 +583,6 @@ module Silverpop
       end
 
       doc.to_s
-
     end
 
     def xml_add_relational_table_column(col)
@@ -631,7 +610,6 @@ module Silverpop
       end
 
       doc.to_s
-
     end
 
     def xml_add_relational_table_mapping(mapping)
@@ -640,7 +618,5 @@ module Silverpop
         '<TABLE_FIELD>%s</TABLE_FIELD>'+
       '</MAP_FIELD>') % [mapping[:list_name], mapping[:table_name]]
     end
-
   end
-
 end

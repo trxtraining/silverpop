@@ -7,15 +7,18 @@ module Silverpop
     class << self
       attr_accessor :logger
     end
-    
-    self.logger = defined?(RAILS_DEFAULT_LOGGER) ? RAILS_DEFAULT_LOGGER : Logger.new(STDERR)
 
-    def initialize(api_post_url)
-      @api_post_url = api_post_url
+    attr_reader :engage, :username, :password, :ftp_username, :ftp_password
+
+    def initialize(pod, username, password, ftp_username, ftp_password)
+      @ftp = "transfer#{pod}.silverpop.com"
+
+      @username, @password = username, password
+      @ftp_username, @ftp_password = ftp_username, ftp_password
     end
     
     def query(xml, session_encoding='')
-      url = URI.parse @api_post_url
+      url = URI.parse @url
       http, resp    = Net::HTTP.new(url.host, url.port), ''
       http.use_ssl  = true
       http.start do |http|
@@ -28,7 +31,5 @@ module Silverpop
     def strip_cdata string
       string.sub('<![CDATA[', '').sub(']]>', '')
     end
-
   end
-
 end

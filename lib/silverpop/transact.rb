@@ -2,24 +2,14 @@ module Silverpop
 
   class Transact < Silverpop::Base
 
-    API_POST_URL  = "https://transact#{SILVERPOP_POD}.silverpop.com/XTMail"
-    FTP_POST_URL  = "transfer#{SILVERPOP_POD}.silverpop.com"
-    TMP_WORK_PATH = "#{RAILS_ROOT}/tmp/"
+    API_POST_URL  = 
+    FTP_POST_URL  = 
 
-    def username
-      # Rails.logger.warn "username: #{SILVERPOP_TRANSACT_USERNAME}"
-      SILVERPOP_TRANSACT_USERNAME
-    end
+    def initialize(pod, username, password, ftp_username, ftp_password, 
+                    campaign_id, recipients=[], options={})
+      @url = "https://transact#{pod}.silverpop.com/XTMail"
 
-    def password
-      # Rails.logger.warn "password: #{SILVERPOP_TRANSACT_PASSWORD}"
-      SILVERPOP_TRANSACT_PASSWORD
-    end
-
-    def initialize(campaign_id, recipients=[], options={})
-      # Rails.logger.warn "initialize(campaign_id: #{campaign_id}, recipients: #{recipients}, options: #{options})"
-
-      super API_POST_URL
+      super 
       @query_doc, @response_doc = nil, nil
       xml_template(campaign_id, recipients, options)
     end
@@ -167,7 +157,5 @@ result = "<PERSONALIZATION>
       # Rails.logger.warn "#{result.inspect}"
       result
     end
-
   end
-
 end
