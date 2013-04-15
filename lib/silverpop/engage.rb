@@ -1,9 +1,12 @@
+require 'active_support/core_ext/object/blank'
+
 module Silverpop
 
   class Engage < Silverpop::Base
 
     API_POST_URL  = "https://api#{SILVERPOP_POD}.silverpop.com/XMLAPI"
     FTP_POST_URL  = "transfer#{SILVERPOP_POD}.silverpop.com"
+    FTP_PORT      = nil # nead for testing
     TMP_WORK_PATH = "#{RAILS_ROOT}/tmp/"
 
     def username
@@ -108,6 +111,10 @@ module Silverpop
       response_xml = query( xml_get_lists(visibility, list_type) )
     end
 
+    def get_list(id, fields)
+      response_xml = query( xml_export_list(id, fields) )
+    end
+
     def calculate_query(query_id, email = nil)
       response_xml = query( xml_calculate_query(query_id, email) )
     end
@@ -127,6 +134,24 @@ module Silverpop
       response_xml = query xml_import_list(
                               File.basename(map_file_path),
                               File.basename(source_file_path) )
+    end
+
+    def export_list(id, fields, destination_file)
+      xml = get_list(id, fields)
+      doc = Hpricot::XML(xml)
+      file_name = doc.at('FILE_PATH').innerHTML
+      
+      # because of the net/ftp's lack we have to use Net::FTP.new construction
+      ftp = Net::FTP.new
+
+      FTP_PORT ? ftp.connect(FTP_POST_URL, FTP_PORT) : ftp.connect(FTP_POST_URL)
+
+      ftp.passive = true # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
+      ftp.login(username, password)
+      ftp.chdir('download')
+      ftp.gettextfile(file_name, destination_file)
+      
+      ftp.close
     end
 
     def import_table(map_file_path, source_file_path)
@@ -272,6 +297,21 @@ module Silverpop
           '</GetLists>' +
         '</Body></Envelope>'
       ) % [visibility.to_s, list_type.to_s]
+    end
+
+    def xml_export_list(id, fields)
+      ( '<Envelope><Body>'+
+          '<ExportList>'+
+            '<LIST_ID>%d</LIST_ID>'+
+            '<EXPORT_TYPE>ALL</EXPORT_TYPE>'+
+            '<EXPORT_FORMAT>CSV</EXPORT_FORMAT>'+
+            '<ADD_TO_STORED_FILES/>'+
+            '<EXPORT_COLUMNS>'+
+              fields.map { |f| '<COLUMN>%s</COLUMN>' % f }.join+
+            '</EXPORT_COLUMNS>'+
+          '</ExportList>'+
+        '</Body></Envelope>'
+      ) % id
     end
 
     def xml_calculate_query(query_id, email)

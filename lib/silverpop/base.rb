@@ -1,9 +1,14 @@
+require 'logger' 
+
 module Silverpop
 
   class Base
 
-    cattr_accessor :logger
-    self.logger = RAILS_DEFAULT_LOGGER
+    class << self
+      attr_accessor :logger
+    end
+    
+    self.logger = defined?(RAILS_DEFAULT_LOGGER) ? RAILS_DEFAULT_LOGGER : Logger.new(STDERR)
 
     def initialize(api_post_url)
       @api_post_url = api_post_url
