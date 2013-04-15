@@ -6,28 +6,20 @@ Gem::Specification.new do |s|
   s.email    = "bill@billfloat.com"
   s.homepage = "http://github.com/billfloat/silverpop/tree/master"
   s.description = "Silverpop allows for seamless integration from Ruby with the Engage and Transact API."
-  s.authors  = ["George Truong, Bill Abney"]
+  s.authors  = ["George Truong, Bill Abney, Sergey Gopkalo"]
 
   s.has_rdoc = false
   s.rdoc_options = ["--main", "README"]
   s.extra_rdoc_files = ["README"]
 
-  # run git ls-files to get an updated list
-  s.files = %w[
-    MIT-LICENSE
-    README
-    Rakefile
-    init.rb
-    install.rb
-    lib/silverpop.rb
-    lib/silverpop/base.rb
-    lib/silverpop/engage.rb
-    lib/silverpop/transact.rb
-    lib/silverpop/silverpop_mailer.rb
-    tasks/silverpop_tasks.rake
-    test/silverpop_test.rb
-    uninstall.rb
-  ]
-  s.test_files = %w[
-  ]
+  s.files         = `git ls-files`.split($\)
+  s.executables   = s.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
+  s.test_files    = s.files.grep(%r{^(test|spec|features)/})
+  s.name          = "silverpop"
+  s.require_paths = ["lib"]
+
+  s.add_development_dependency 'fakeweb'
+  s.add_development_dependency 'rake'
+  s.add_development_dependency 'rspec'
+  s.add_development_dependency 'ftpd'
 end
