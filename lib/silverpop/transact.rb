@@ -2,24 +2,11 @@ module Silverpop
 
   class Transact < Silverpop::Base
 
-    API_POST_URL  = "https://transact#{SILVERPOP_POD}.silverpop.com/XTMail"
-    FTP_POST_URL  = "transfer#{SILVERPOP_POD}.silverpop.com"
-    TMP_WORK_PATH = "#{RAILS_ROOT}/tmp/"
-
-    def username
-      # Rails.logger.warn "username: #{SILVERPOP_TRANSACT_USERNAME}"
-      SILVERPOP_TRANSACT_USERNAME
+    class << self
+      attr_accessor :url, :ftp_url, :username, :password
     end
 
-    def password
-      # Rails.logger.warn "password: #{SILVERPOP_TRANSACT_PASSWORD}"
-      SILVERPOP_TRANSACT_PASSWORD
-    end
-
-    def initialize(campaign_id, recipients=[], options={})
-      # Rails.logger.warn "initialize(campaign_id: #{campaign_id}, recipients: #{recipients}, options: #{options})"
-
-      super API_POST_URL
+    def initialize(campaign_id, recipients=[], options={}, logger=nil)
       @query_doc, @response_doc = nil, nil
       xml_template(campaign_id, recipients, options)
     end
@@ -35,15 +22,12 @@ module Silverpop
     end
 
     def query
-      # Rails.logger.warn "username: #{SILVERPOP_TRANSACT_USERNAME}"
-      # Rails.logger.warn "password: #{SILVERPOP_TRANSACT_PASSWORD}"
-
       @response_doc = Hpricot::XML( super(@query_doc.to_s) )
       log_error unless success?
     end
 
     def submit_batch(batch_file_path)
-      Net::FTP.open(FTP_POST_URL, username, password) do |ftp|
+      Net::FTP.open(ftp_url, username, password) do |ftp|
         ftp.passive = true  # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
         ftp.chdir('transact')
         ftp.chdir('inbound')
@@ -139,12 +123,12 @@ module Silverpop
             '<TRANSACTION_ID>%s</TRANSACTION_ID>' % o[:transaction_id] )
       end
 
-      Rails.logger.warn "add_recipients(#{recipients.inspect})"
+      logger.warn "add_recipients(#{recipients.inspect})"
       add_recipients recipients
     end
 
     def xml_recipient(email)
-      Rails.logger.warn "xml_recipient(#{email.inspect})"
+      logger.warn "xml_recipient(#{email.inspect})"
 
       ( "\n" + '<RECIPIENT>'+
           '<EMAIL>%s</EMAIL>'+
@@ -154,7 +138,7 @@ module Silverpop
     end
 
     def xml_recipient_personalization(personalization)
-      Rails.logger.warn "xml_recipient_personalization(#{personalization.inspect})"
+      logger.warn "xml_recipient_personalization(#{personalization.inspect})"
 
       tag_name = personalization[:tag_name]
       value = personalization[:value]
@@ -164,7 +148,6 @@ result = "<PERSONALIZATION>
   <VALUE>#{value}</VALUE>
 </PERSONALIZATION>"
 
-      # Rails.logger.warn "#{result.inspect}"
       result
     end
 

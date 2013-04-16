@@ -4,22 +4,22 @@ module Silverpop
 
   class Engage < Silverpop::Base
 
-    def initialize(pod, username, password, ftp_username, ftp_password)
-      @url = "https://api#{pod}.silverpop.com/XMLAPI"
+    class << self
+      attr_accessor :url, :username, :password
+      attr_accessor :ftp_url, :ftp_port, :ftp_username, :ftp_password
+    end
+
+    def initialize
       @session_id, @session_encoding, @response_xml = nil, nil, nil
-      super
     end
 
     ###
     #   QUERY AND SERVER RESPONSE
     ###
     def query(xml)
-      se = @session_encoding.nil? ? '' : @session_encoding
-      @response_xml = super(xml, se)
-
-      log_error unless success?
-
-      @response_xml
+      (@response_xml = super(xml, @session_encoding.to_s)).tap do 
+        log_error unless success?
+      end
     end
 
     def success?
@@ -31,7 +31,6 @@ module Silverpop
 
     def error_message
       return false if success?
-
       doc = Hpricot::XML(@response_xml)
       strip_cdata( doc.at('FaultString').innerHTML )
     end
@@ -100,7 +99,7 @@ module Silverpop
     end
 
     def import_list(map_file_path, source_file_path)
-      Net::FTP.open(FTP_POST_URL) do |ftp|
+      Net::FTP.open(ftp_url) do |ftp|
         ftp.passive = true  # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
         ftp.login(ftp_username, ftp_password)
         ftp.chdir('upload')
@@ -124,7 +123,8 @@ module Silverpop
       # because of the net/ftp's lack we have to use Net::FTP.new construction
       ftp = Net::FTP.new
 
-      FTP_PORT ? ftp.connect(FTP_POST_URL, FTP_PORT) : ftp.connect(FTP_POST_URL)
+      # need for testing
+      ftp_port ? ftp.connect(ftp_url, ftp_port) : ftp.connect(ftp_url)
 
       ftp.passive = true # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
       ftp.login(username, password)
@@ -135,7 +135,7 @@ module Silverpop
     end
 
     def import_table(map_file_path, source_file_path)
-      Net::FTP.open(FTP_POST_URL) do |ftp|
+      Net::FTP.open(ftp_url) do |ftp|
         ftp.passive = true  # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
         ftp.login(ftp_username, ftp_password)
         ftp.chdir('upload')
