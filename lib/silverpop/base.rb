@@ -4,9 +4,10 @@ module Silverpop
 
   class Base
 
-    #extend Forwardable
-    #def_delegators :self, :url, :ftp_url, :ftp_port
-    #def_delegators :self, :username, :password, :ftp_username, :ftp_password
+    extend Forwardable
+    
+    def_delegators :'self.class', :url, :ftp_url, :ftp_port, :logger
+    def_delegators :'self.class', :username, :password, :ftp_username, :ftp_password
 
     class << self
 
@@ -53,38 +54,6 @@ module Silverpop
       def configure
         yield(self)
       end
-    end
-
-    def url
-      self.class.url
-    end
-
-    def ftp_url
-      self.class.ftp_url
-    end
-
-    def ftp_port
-      self.class.ftp_port
-    end
-
-    def username
-      self.class.username
-    end
-
-    def password
-      self.class.password
-    end
-
-    def ftp_username
-      self.class.ftp_username
-    end
-
-    def ftp_password
-      self.class.ftp_password
-    end
-
-    def logger
-      self.class.logger
     end
 
     def query(xml, session_encoding='')
