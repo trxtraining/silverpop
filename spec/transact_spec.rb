@@ -26,17 +26,23 @@ module Silverpop
     let(:response) do
       '<Envelope><Body><RESULT>'+
         '<SUCCESS>TRUE</SUCCESS>'+
-        '<JOB_ID>499600</JOB_ID>'+
-        '<FILE_PATH>'+
-          '/download/file.csv'+
-        '</FILE_PATH>'+
+        '<USER_ID>12c734c-108b610e402-f528764d624db129b32c21fbca0cb8d6</USER_ID>'+
+        '<NAME>Welcome Campaign</NAME>'+
+        '<STATUS>Active</STATUS>'+
+        '<NOTES>Mailings will be sent when subscription begins.</NOTES>'+
+        '<LIST_ID>56432</LIST_ID>'+
+        '<EVENT_TRIGGER>CustomEventDate</EVENT_TRIGGER>'+
+        '<TRACKING_LEVEL>Unique</TRACKING_LEVEL>'+
+        '<CUSTOM_EVENT_DATE_COLUMN>Magazine Subscription Date</CUSTOM_EVENT_DATE_COLUMN>'+
+        '<ACTIVATION_DATE>01/29/2011</ACTIVATION_DATE>'+
+        '<COMPLETION_DATE>12/31/2011</COMPLETION_DATE>'+
       '</RESULT></Body></Envelope>'
     end
 
     it "send xml request" do
       stub_request(:post, url).with(:body => request,
               :headers => {'Accept'=>'*/*', 'Content-Type'=>'text/xml'}).
-         to_return(:status => 200, :body => "", :headers => {})
+         to_return(:status => 200, :body => response, :headers => {})
 
       @transact = Transact.new("")
       @transact.query
