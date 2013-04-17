@@ -56,7 +56,7 @@ module Silverpop
       before(:all) do
         FtpServer.start
 
-        Silverpop::Base.configure do |config|
+        Silverpop.configure do |config|
           config.setup_urls(INSTANCE)
           config.engage_username = "developmentapi@billfloat.com"
           config.engage_password = "b!llFl0at"
@@ -152,7 +152,7 @@ module Silverpop
       before(:all) do
         WebMock.allow_net_connect!
 
-        Silverpop::Base.configure do |config|
+        Silverpop.configure do |config|
           config.setup_urls(INSTANCE)
           config.engage_username = "developmentapi@billfloat.com"
           config.engage_password = "b!llFl0at"

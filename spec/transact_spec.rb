@@ -11,7 +11,7 @@ module Silverpop
     describe "Local tests" do
 
       before(:all) do
-        Silverpop::Base.configure do |config|
+        Silverpop.configure do |config|
           config.setup_urls(INSTANCE)
           config.engage_username = "developmentapi@billfloat.com"
           config.engage_password = "b!llFl0at"
@@ -53,12 +53,12 @@ module Silverpop
     end
   end
 
-  describe "Remote tests" do
+  describe "Remote tests", :remote => true do
 
     before(:all) do
       WebMock.allow_net_connect!
         
-      Silverpop::Base.configure do |config|
+      Silverpop.configure do |config|
         config.setup_urls(INSTANCE)
         config.engage_username = "developmentapi@billfloat.com"
         config.engage_password = "b!llFl0at"

@@ -9,7 +9,7 @@ Silverpop allows for seamless integration from Ruby with the Engage and Transact
 Configurations
 ====================================================================================================
 
-Silverpop::Base.configure do |config|
+Silverpop.configure do |config|
   config.setup_urls(instance_number)
   config.engage_username = "mail@billfloat.com"
   config.engage_password = "password"

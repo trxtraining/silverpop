@@ -2,6 +2,10 @@ require 'logger'
 
 module Silverpop
 
+  def self.configure
+    yield(Silverpop::Base)
+  end
+
   class Base
 
     extend Forwardable
@@ -50,10 +54,6 @@ module Silverpop
 
       def logger=(logger)
         @@logger = logger
-      end
-
-      def configure
-        yield(self)
       end
     end
 
