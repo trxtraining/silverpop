@@ -3,145 +3,189 @@ require 'support/ftp/server'
 require 'webmock/rspec'
 
 module Silverpop
-  
+
+  INSTANCE = 5
+
   describe Engage do
 
-    let(:pod) { 5 }
-
-    before(:all) do
-      FtpServer.start
-
-      Silverpop::Base.configure do |config|
-        config.setup_urls(pod)
-        config.engage_username = "developmentapi@billfloat.com"
-        config.engage_password = "b!llFl0at"
-        config.engage_ftp_username = "developmentapi@billfloat.com"
-        config.engage_ftp_password = "B1llFl0at"
-      end
-
-      Engage.instance_variable_set(:@ftp_url, "localhost")
-      Engage.instance_variable_set(:@ftp_port, FtpServer::PORT)
+    let(:fields) do
+      %w[
+        BILLPAY_APPROVED
+        BILLPAY_COMPLETED
+        BILLPAY_PROFILE_COMPLETED
+        BILLPAY_REGISTRATION
+        BILLPAY_SUBMITTED
+        BILL_DUE_DATE
+        BILL_DUE_DATE_4_RECURRING
+        BILL_DUE_DATE_RECURRING
+        CYCLE_INITIATION
+        DROPOFF
+        EMAIL
+        EXTERNAL_ID
+        FIRST_NAME
+        FUNDS_AVAILABLE
+        LAST_BILLER_ECOMMERCE
+        LAST_BILLER_NAME
+        LAST_DECLINED
+        LAST_LOAN_APPLICATION_DATE
+        LAST_LOGIN
+        LOAN_CURRENTLY_OUTSTANDING
+        LOAN_DUE_DATE
+        LOAN_WRITTEN_OFF
+        MID_WAY_DATE
+        NUM_DAYS_OVERDUE
+        NUM_LOANS_REPAID
+        OPTOUT_COMING_DUE_EMAIL
+        OPTOUT_COMING_DUE_SMS
+        OPTOUT_DROPOFFS_EMAIL
+        OPTOUT_DROPOFFS_SMS
+        OPTOUT_NEWSLETTER_EMAIL
+        OPTOUT_NEWSLETTER_SMS
+        OPTOUT_NOTICES_SMS
+        PAYMENT_POWER
+        PREMIUM_ENROLLMENT_DATE
+        REPAYMENT_DATE
+        SOURCE
+        STATE
+        SUSPENDED
+        TOTAL_OUTSTANDING_LOANS ]
     end
 
-    after(:all) do
-      FtpServer.stop
-    end
+    describe "Local tests" do
 
-    let(:url) { "https://api#{pod}.silverpop.com/XMLAPI" }
-    let(:list_id) { 713947 }
+      before(:all) do
+        FtpServer.start
 
-    let(:request) do 
-      '<Envelope><Body><ExportList>'+
-        ('<LIST_ID>%d</LIST_ID>' % list_id)+
-        '<EXPORT_TYPE>ALL</EXPORT_TYPE>'+
-        '<EXPORT_FORMAT>CSV</EXPORT_FORMAT>'+
-        '<ADD_TO_STORED_FILES />'+
-        '<DATE_START>07/25/2011 12:12:11</DATE_START>'+
-        '<DATE_END>09/30/2011 14:14:11</DATE_END>'+
-        '<EXPORT_COLUMNS>'+
-          '<COLUMN>FIRST_NAME</COLUMN>'+
-          '<COLUMN>INITIAL</COLUMN>'+
-          '<COLUMN>LAST_NAME</COLUMN>'+
-        '</EXPORT_COLUMNS>'+
-      '</ExportList></Body></Envelope>'
-    end
+        Silverpop::Base.configure do |config|
+          config.setup_urls(INSTANCE)
+          config.engage_username = "developmentapi@billfloat.com"
+          config.engage_password = "b!llFl0at"
+          config.engage_ftp_username = "developmentapi@billfloat.com"
+          config.engage_ftp_password = "B1llFl0at"
+        end
 
-    let(:response) do
-      '<Envelope><Body><RESULT>'+
-        '<SUCCESS>TRUE</SUCCESS>'+
-        '<JOB_ID>499600</JOB_ID>'+
-        '<FILE_PATH>'+
-          '/download/file.csv'+
-        '</FILE_PATH>'+
-      '</RESULT></Body></Envelope>'
-    end
-
-    describe "export_list" do
-
-      let(:fields) do
-        %w[
-          BILLPAY_APPROVED
-          BILLPAY_COMPLETED
-          BILLPAY_PROFILE_COMPLETED
-          BILLPAY_REGISTRATION
-          BILLPAY_SUBMITTED
-          BILL_DUE_DATE
-          BILL_DUE_DATE_4_RECURRING
-          BILL_DUE_DATE_RECURRING
-          CYCLE_INITIATION
-          DROPOFF
-          EMAIL
-          EXTERNAL_ID
-          FIRST_NAME
-          FUNDS_AVAILABLE
-          LAST_BILLER_ECOMMERCE
-          LAST_BILLER_NAME
-          LAST_DECLINED
-          LAST_LOAN_APPLICATION_DATE
-          LAST_LOGIN
-          LOAN_CURRENTLY_OUTSTANDING
-          LOAN_DUE_DATE
-          LOAN_WRITTEN_OFF
-          MID_WAY_DATE
-          NUM_DAYS_OVERDUE
-          NUM_LOANS_REPAID
-          OPTOUT_COMING_DUE_EMAIL
-          OPTOUT_COMING_DUE_SMS
-          OPTOUT_DROPOFFS_EMAIL
-          OPTOUT_DROPOFFS_SMS
-          OPTOUT_NEWSLETTER_EMAIL
-          OPTOUT_NEWSLETTER_SMS
-          OPTOUT_NOTICES_SMS
-          PAYMENT_POWER
-          PREMIUM_ENROLLMENT_DATE
-          REPAYMENT_DATE
-          SOURCE
-          STATE
-          SUSPENDED
-          TOTAL_OUTSTANDING_LOANS ]
+        Engage.instance_variable_set(:@ftp_url, "localhost")
+        Engage.instance_variable_set(:@ftp_port, FtpServer::PORT)
       end
 
-      let(:export_list_request) do
-        "<Envelope><Body><ExportList><LIST_ID>713947</LIST_ID><EXPORT_TYPE>ALL</EXPORT_TYPE><EXPORT_FORMAT>CSV</EXPORT_FORMAT><ADD_TO_STORED_FILES/><EXPORT_COLUMNS><COLUMN>BILLPAY_APPROVED</COLUMN><COLUMN>BILLPAY_COMPLETED</COLUMN><COLUMN>BILLPAY_PROFILE_COMPLETED</COLUMN><COLUMN>BILLPAY_REGISTRATION</COLUMN><COLUMN>BILLPAY_SUBMITTED</COLUMN><COLUMN>BILL_DUE_DATE</COLUMN><COLUMN>BILL_DUE_DATE_4_RECURRING</COLUMN><COLUMN>BILL_DUE_DATE_RECURRING</COLUMN><COLUMN>CYCLE_INITIATION</COLUMN><COLUMN>DROPOFF</COLUMN><COLUMN>EMAIL</COLUMN><COLUMN>EXTERNAL_ID</COLUMN><COLUMN>FIRST_NAME</COLUMN><COLUMN>FUNDS_AVAILABLE</COLUMN><COLUMN>LAST_BILLER_ECOMMERCE</COLUMN><COLUMN>LAST_BILLER_NAME</COLUMN><COLUMN>LAST_DECLINED</COLUMN><COLUMN>LAST_LOAN_APPLICATION_DATE</COLUMN><COLUMN>LAST_LOGIN</COLUMN><COLUMN>LOAN_CURRENTLY_OUTSTANDING</COLUMN><COLUMN>LOAN_DUE_DATE</COLUMN><COLUMN>LOAN_WRITTEN_OFF</COLUMN><COLUMN>MID_WAY_DATE</COLUMN><COLUMN>NUM_DAYS_OVERDUE</COLUMN><COLUMN>NUM_LOANS_REPAID</COLUMN><COLUMN>OPTOUT_COMING_DUE_EMAIL</COLUMN><COLUMN>OPTOUT_COMING_DUE_SMS</COLUMN><COLUMN>OPTOUT_DROPOFFS_EMAIL</COLUMN><COLUMN>OPTOUT_DROPOFFS_SMS</COLUMN><COLUMN>OPTOUT_NEWSLETTER_EMAIL</COLUMN><COLUMN>OPTOUT_NEWSLETTER_SMS</COLUMN><COLUMN>OPTOUT_NOTICES_SMS</COLUMN><COLUMN>PAYMENT_POWER</COLUMN><COLUMN>PREMIUM_ENROLLMENT_DATE</COLUMN><COLUMN>REPAYMENT_DATE</COLUMN><COLUMN>SOURCE</COLUMN><COLUMN>STATE</COLUMN><COLUMN>SUSPENDED</COLUMN><COLUMN>TOTAL_OUTSTANDING_LOANS</COLUMN></EXPORT_COLUMNS></ExportList></Body></Envelope>"
+      after(:all) do
+        FtpServer.stop
       end
 
+      let(:url) { "https://api#{INSTANCE}.silverpop.com/XMLAPI" }
+      let(:list_id) { 713947 }
 
-      let(:destination_file) do
-        File.expand_path('./support/ftp/temp.csv', File.dirname(__FILE__))
+      let(:request) do 
+        '<Envelope><Body><ExportList>'+
+          ('<LIST_ID>%d</LIST_ID>' % list_id)+
+          '<EXPORT_TYPE>ALL</EXPORT_TYPE>'+
+          '<EXPORT_FORMAT>CSV</EXPORT_FORMAT>'+
+          '<ADD_TO_STORED_FILES />'+
+          '<DATE_START>07/25/2011 12:12:11</DATE_START>'+
+          '<DATE_END>09/30/2011 14:14:11</DATE_END>'+
+          '<EXPORT_COLUMNS>'+
+            '<COLUMN>FIRST_NAME</COLUMN>'+
+            '<COLUMN>INITIAL</COLUMN>'+
+            '<COLUMN>LAST_NAME</COLUMN>'+
+          '</EXPORT_COLUMNS>'+
+        '</ExportList></Body></Envelope>'
       end
 
-      before(:each) do
-        @engage = Engage.new
+      let(:response) do
+        '<Envelope><Body><RESULT>'+
+          '<SUCCESS>TRUE</SUCCESS>'+
+          '<JOB_ID>499600</JOB_ID>'+
+          '<FILE_PATH>'+
+            '/download/file.csv'+
+          '</FILE_PATH>'+
+        '</RESULT></Body></Envelope>'
+      end
+
+      describe "export_list" do
+
+        let(:export_list_request) do
+          "<Envelope><Body><ExportList><LIST_ID>713947</LIST_ID><EXPORT_TYPE>ALL</EXPORT_TYPE><EXPORT_FORMAT>CSV</EXPORT_FORMAT><ADD_TO_STORED_FILES/><EXPORT_COLUMNS><COLUMN>BILLPAY_APPROVED</COLUMN><COLUMN>BILLPAY_COMPLETED</COLUMN><COLUMN>BILLPAY_PROFILE_COMPLETED</COLUMN><COLUMN>BILLPAY_REGISTRATION</COLUMN><COLUMN>BILLPAY_SUBMITTED</COLUMN><COLUMN>BILL_DUE_DATE</COLUMN><COLUMN>BILL_DUE_DATE_4_RECURRING</COLUMN><COLUMN>BILL_DUE_DATE_RECURRING</COLUMN><COLUMN>CYCLE_INITIATION</COLUMN><COLUMN>DROPOFF</COLUMN><COLUMN>EMAIL</COLUMN><COLUMN>EXTERNAL_ID</COLUMN><COLUMN>FIRST_NAME</COLUMN><COLUMN>FUNDS_AVAILABLE</COLUMN><COLUMN>LAST_BILLER_ECOMMERCE</COLUMN><COLUMN>LAST_BILLER_NAME</COLUMN><COLUMN>LAST_DECLINED</COLUMN><COLUMN>LAST_LOAN_APPLICATION_DATE</COLUMN><COLUMN>LAST_LOGIN</COLUMN><COLUMN>LOAN_CURRENTLY_OUTSTANDING</COLUMN><COLUMN>LOAN_DUE_DATE</COLUMN><COLUMN>LOAN_WRITTEN_OFF</COLUMN><COLUMN>MID_WAY_DATE</COLUMN><COLUMN>NUM_DAYS_OVERDUE</COLUMN><COLUMN>NUM_LOANS_REPAID</COLUMN><COLUMN>OPTOUT_COMING_DUE_EMAIL</COLUMN><COLUMN>OPTOUT_COMING_DUE_SMS</COLUMN><COLUMN>OPTOUT_DROPOFFS_EMAIL</COLUMN><COLUMN>OPTOUT_DROPOFFS_SMS</COLUMN><COLUMN>OPTOUT_NEWSLETTER_EMAIL</COLUMN><COLUMN>OPTOUT_NEWSLETTER_SMS</COLUMN><COLUMN>OPTOUT_NOTICES_SMS</COLUMN><COLUMN>PAYMENT_POWER</COLUMN><COLUMN>PREMIUM_ENROLLMENT_DATE</COLUMN><COLUMN>REPAYMENT_DATE</COLUMN><COLUMN>SOURCE</COLUMN><COLUMN>STATE</COLUMN><COLUMN>SUSPENDED</COLUMN><COLUMN>TOTAL_OUTSTANDING_LOANS</COLUMN></EXPORT_COLUMNS></ExportList></Body></Envelope>"
+        end
+
+
+        let(:destination_file) do
+          File.expand_path('./support/ftp/temp.csv', File.dirname(__FILE__))
+        end
+
+        before(:each) do
+          @engage = Engage.new
+        end
+
+        it "send xml request" do
+          stub_request(:post, url).with(:body => export_list_request).
+            to_return(:body => response)
+          
+          Net::FTP.stub(:new).and_return(double('ftp').as_null_object)
+
+          @engage.export_list(list_id, fields, destination_file).should be_success
+        end
+
+        it "return csv file" do
+          stub_request(:post, url).with(:body => export_list_request).
+            to_return(:body => response)
+          
+          etalon_file = File.expand_path('./support/ftp/folder/download/file.csv', 
+            File.dirname(__FILE__))
+          @engage.export_list(list_id, fields, destination_file)
+
+          destination_file.should be_same_file_as(etalon_file)
+        end
       end
 
       it "send xml request" do
-        stub_request(:post, url).with(:body => export_list_request).
-          to_return(:body => response)
-        
-        Net::FTP.stub(:new).and_return(double('ftp').as_null_object)
+        stub_request(:post, url).with(:body => request, 
+          :headers => {'Content-type' => 'text/xml'}).to_return(:body => response)
 
-        @engage.export_list(list_id, fields, destination_file).should be_success
+        @engage = Engage.new
+
+        @engage.query(request)
+      end
+    end
+
+    describe "Remote tests", :remote => true do
+
+      before(:all) do
+        WebMock.allow_net_connect!
+
+        Silverpop::Base.configure do |config|
+          config.setup_urls(INSTANCE)
+          config.engage_username = "developmentapi@billfloat.com"
+          config.engage_password = "b!llFl0at"
+          config.engage_ftp_username = "developmentapi@billfloat.com"
+          config.engage_ftp_password = "B1llFl0at"
+        end
       end
 
+      let(:destination_file) do
+        File.expand_path('./support/downloaded.csv', File.dirname(__FILE__))
+      end
+
+      let(:etalon_file) do
+        File.expand_path('./support/etalon.csv', File.dirname(__FILE__))
+      end
+      
       it "return csv file" do
-        stub_request(:post, url).with(:body => export_list_request).
-          to_return(:body => response)
+        list_id = 2126944
         
-        etalon_file = File.expand_path('./support/ftp/folder/download/file.csv', 
-          File.dirname(__FILE__))
+        puts "**********************************************************"
+        puts "before running this test please ensure that:"
+        puts "- there's a database with id #{list_id} on the silverpop service"
+        puts "- this database has 39 fields"
+        puts "- and it has 3 contacts"
+        puts "**********************************************************"
+        
+        @engage = Engage.new
+        @engage.login
+
         @engage.export_list(list_id, fields, destination_file)
 
         destination_file.should be_same_file_as(etalon_file)
       end
-    end
-
-    it "send xml request" do
-      stub_request(:post, url).with(:body => request, 
-        :headers => {'Content-type' => 'text/xml'}).to_return(:body => response)
-
-      @engage = Engage.new
-
-      @engage.query(request)
     end
   end
 end

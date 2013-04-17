@@ -119,7 +119,7 @@ module Silverpop
       xml = get_list(id, fields)
       doc = Hpricot::XML(xml)
       file_name = doc.at('FILE_PATH').innerHTML
-      
+
       # because of the net/ftp's lack we have to use Net::FTP.new construction
       ftp = Net::FTP.new
 
@@ -127,9 +127,10 @@ module Silverpop
       ftp_port ? ftp.connect(ftp_url, ftp_port) : ftp.connect(ftp_url)
 
       ftp.passive = true # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
-      ftp.login(username, password)
+      ftp.login(ftp_username, ftp_password)
       ftp.chdir('download')
-      ftp.gettextfile(file_name, destination_file)
+      
+      retry_on { ftp.gettextfile(file_name, destination_file) }
       
       ftp.close
     end

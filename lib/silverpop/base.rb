@@ -14,6 +14,7 @@ module Silverpop
       def setup_urls(pod)
         Engage.url = "https://api#{pod}.silverpop.com/XMLAPI"
         Engage.ftp_url = "transfer#{pod}.silverpop.com"
+        Engage.ftp_port = nil # need for testing
 
         Transact.url = "https://transact#{pod}.silverpop.com/XTMail"
         Transact.ftp_url = "transfer#{pod}.silverpop.com"
@@ -69,6 +70,22 @@ module Silverpop
 
     def strip_cdata string
       string.sub('<![CDATA[', '').sub(']]>', '')
+    end
+
+    private
+
+    def retry_on(attempts=10)
+      begin
+        yield
+      rescue Net::FTPPermError => error
+        if attempts < 0 
+          raise error
+        else
+          attempts -= 1
+          puts "#{attempts} attempts remain"
+          retry
+        end
+      end
     end
 
   end

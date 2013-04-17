@@ -17,10 +17,10 @@ module Silverpop
     end
 
     let(:pod) { 5 }
-    let(:url) { "https://api#{pod}.silverpop.com/XMLAPI" }
+    let(:url) { "https://transact#{pod}.silverpop.com/XTMail" }
     
     let(:request) do 
-      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><XTMAILING><CAMPAIGN_ID></CAMPAIGN_ID><SHOW_ALL_SEND_DETAIL>true</SHOW_ALL_SEND_DETAIL><SEND_AS_BATCH>false</SEND_AS_BATCH><NO_RETRY_ON_FAILURE>false</NO_RETRY_ON_FAILURE></XTMAILING>'
+      "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<XTMAILING>\n<CAMPAIGN_ID></CAMPAIGN_ID>\n<SHOW_ALL_SEND_DETAIL>true</SHOW_ALL_SEND_DETAIL>\n<SEND_AS_BATCH>false</SEND_AS_BATCH>\n<NO_RETRY_ON_FAILURE>false</NO_RETRY_ON_FAILURE>\n</XTMAILING>"
     end
     
     let(:response) do
@@ -35,7 +35,8 @@ module Silverpop
 
     it "send xml request" do
       stub_request(:post, url).with(:body => request,
-        :headers => {'Content-type' => 'text/xml'}).to_return(:body => response)
+              :headers => {'Accept'=>'*/*', 'Content-Type'=>'text/xml'}).
+         to_return(:status => 200, :body => "", :headers => {})
 
       @transact = Transact.new("")
       @transact.query
