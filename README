@@ -6,6 +6,16 @@ Silverpop Engage and Transact API -- Extracted from ShoeDazzle.com
 Silverpop allows for seamless integration from Ruby with the Engage and Transact API. Built on Rails
 2.1.0. Requires hpricot, net/http, net/ftp, and uri.
 
+Configurations
+====================================================================================================
+
+Silverpop.configure do |config|
+  config.setup_urls(instance_number)
+  config.engage_username = "mail@billfloat.com"
+  config.engage_password = "password"
+  config.engage_ftp_username = "mail@billfloat.com"
+  config.engage_ftp_password = "password"
+end
 
 Examples
 ====================================================================================================

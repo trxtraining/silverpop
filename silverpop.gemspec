@@ -18,8 +18,8 @@ Gem::Specification.new do |s|
   s.name          = "silverpop"
   s.require_paths = ["lib"]
 
-  s.add_development_dependency 'fakeweb'
   s.add_development_dependency 'rake'
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'ftpd'
+  s.add_development_dependency 'webmock'
 end

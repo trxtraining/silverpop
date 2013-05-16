@@ -4,29 +4,12 @@ module Silverpop
 
   class Engage < Silverpop::Base
 
-    API_POST_URL  = "https://api#{SILVERPOP_POD}.silverpop.com/XMLAPI"
-    FTP_POST_URL  = "transfer#{SILVERPOP_POD}.silverpop.com"
-    FTP_PORT      = nil # nead for testing
-    TMP_WORK_PATH = "#{RAILS_ROOT}/tmp/"
-
-    def username
-      SILVERPOP_ENGAGE_USERNAME
+    class << self
+      attr_accessor :url, :username, :password
+      attr_accessor :ftp_url, :ftp_port, :ftp_username, :ftp_password
     end
 
-    def password
-      SILVERPOP_ENGAGE_PASSWORD
-    end
-
-    def ftp_username # not necessarily the same as the API login
-      SILVERPOP_ENGAGE_FTP_USERNAME
-    end
-
-    def ftp_password
-      SILVERPOP_ENGAGE_FTP_PASSWORD
-    end
-
-    def initialize()
-      super API_POST_URL
+    def initialize
       @session_id, @session_encoding, @response_xml = nil, nil, nil
     end
 
@@ -34,12 +17,9 @@ module Silverpop
     #   QUERY AND SERVER RESPONSE
     ###
     def query(xml)
-      se = @session_encoding.nil? ? '' : @session_encoding
-      @response_xml = super(xml, se)
-
-      log_error unless success?
-
-      @response_xml
+      (@response_xml = super(xml, @session_encoding.to_s)).tap do 
+        log_error unless success?
+      end
     end
 
     def success?
@@ -51,7 +31,6 @@ module Silverpop
 
     def error_message
       return false if success?
-
       doc = Hpricot::XML(@response_xml)
       strip_cdata( doc.at('FaultString').innerHTML )
     end
@@ -120,7 +99,7 @@ module Silverpop
     end
 
     def import_list(map_file_path, source_file_path)
-      Net::FTP.open(FTP_POST_URL) do |ftp|
+      Net::FTP.open(ftp_url) do |ftp|
         ftp.passive = true  # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
         ftp.login(ftp_username, ftp_password)
         ftp.chdir('upload')
@@ -140,22 +119,24 @@ module Silverpop
       xml = get_list(id, fields)
       doc = Hpricot::XML(xml)
       file_name = doc.at('FILE_PATH').innerHTML
-      
+
       # because of the net/ftp's lack we have to use Net::FTP.new construction
       ftp = Net::FTP.new
 
-      FTP_PORT ? ftp.connect(FTP_POST_URL, FTP_PORT) : ftp.connect(FTP_POST_URL)
+      # need for testing
+      ftp_port ? ftp.connect(ftp_url, ftp_port) : ftp.connect(ftp_url)
 
       ftp.passive = true # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
-      ftp.login(username, password)
+      ftp.login(ftp_username, ftp_password)
       ftp.chdir('download')
-      ftp.gettextfile(file_name, destination_file)
+      
+      retry_on { ftp.gettextfile(file_name, destination_file) }
       
       ftp.close
     end
 
     def import_table(map_file_path, source_file_path)
-      Net::FTP.open(FTP_POST_URL) do |ftp|
+      Net::FTP.open(ftp_url) do |ftp|
         ftp.passive = true  # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
         ftp.login(ftp_username, ftp_password)
         ftp.chdir('upload')
@@ -250,15 +231,15 @@ module Silverpop
   
     def map_type(type) # some API calls want a number, some want a name. This maps the name back to the number
       {
-      "TEXT" => 0,
-      "YESNO" => 1,
-      "NUMERIC" => 2,
-      "DATE" => 3,
-      "TIME" => 4,
-      "COUNTRY" => 5,
-      "SELECTION" => 6,
-      "SEGMENTING" => 8,
-      "EMAIL" => 9
+        "TEXT" => 0,
+        "YESNO" => 1,
+        "NUMERIC" => 2,
+        "DATE" => 3,
+        "TIME" => 4,
+        "COUNTRY" => 5,
+        "SELECTION" => 6,
+        "SEGMENTING" => 8,
+        "EMAIL" => 9
       }[type]
     end
 
@@ -603,7 +584,6 @@ module Silverpop
       end
 
       doc.to_s
-
     end
 
     def xml_add_relational_table_column(col)
@@ -631,7 +611,6 @@ module Silverpop
       end
 
       doc.to_s
-
     end
 
     def xml_add_relational_table_mapping(mapping)
@@ -640,7 +619,5 @@ module Silverpop
         '<TABLE_FIELD>%s</TABLE_FIELD>'+
       '</MAP_FIELD>') % [mapping[:list_name], mapping[:table_name]]
     end
-
   end
-
 end
