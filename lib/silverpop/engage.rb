@@ -125,13 +125,10 @@ module Silverpop
         instance_variable_get("@table").keys
       end
 
-      def fields=(*);   raise_error('fields')  end
-      def columns=(*);  raise_error('columns') end
-
-      private
-
-      def raise_error(method)
-        raise ArgumentError, "'#{method}' is reserverd word in RawRecipientDataOptions"
+      [:fields=, :columns=].each do |method|
+        define_method(method) do
+          raise ArgumentError, "'#{method}' is reserverd word in RawRecipientDataOptions"
+        end
       end
     end
 
