@@ -101,12 +101,19 @@ module Silverpop
         '</RESULT></Body></Envelope>'
       end
 
-      describe "export_list" do
+      it "sends xml request" do
+        stub_request(:post, url).with(:body => request, 
+          :headers => {'Content-type' => 'text/xml'}).to_return(:body => response)
 
+        @engage = Engage.new
+
+        @engage.query(request)
+      end
+
+      describe "export_list" do
         let(:export_list_request) do
           "<Envelope><Body><ExportList><LIST_ID>713947</LIST_ID><EXPORT_TYPE>ALL</EXPORT_TYPE><EXPORT_FORMAT>CSV</EXPORT_FORMAT><ADD_TO_STORED_FILES/><EXPORT_COLUMNS><COLUMN>BILLPAY_APPROVED</COLUMN><COLUMN>BILLPAY_COMPLETED</COLUMN><COLUMN>BILLPAY_PROFILE_COMPLETED</COLUMN><COLUMN>BILLPAY_REGISTRATION</COLUMN><COLUMN>BILLPAY_SUBMITTED</COLUMN><COLUMN>BILL_DUE_DATE</COLUMN><COLUMN>BILL_DUE_DATE_4_RECURRING</COLUMN><COLUMN>BILL_DUE_DATE_RECURRING</COLUMN><COLUMN>CYCLE_INITIATION</COLUMN><COLUMN>DROPOFF</COLUMN><COLUMN>EMAIL</COLUMN><COLUMN>EXTERNAL_ID</COLUMN><COLUMN>FIRST_NAME</COLUMN><COLUMN>FUNDS_AVAILABLE</COLUMN><COLUMN>LAST_BILLER_ECOMMERCE</COLUMN><COLUMN>LAST_BILLER_NAME</COLUMN><COLUMN>LAST_DECLINED</COLUMN><COLUMN>LAST_LOAN_APPLICATION_DATE</COLUMN><COLUMN>LAST_LOGIN</COLUMN><COLUMN>LOAN_CURRENTLY_OUTSTANDING</COLUMN><COLUMN>LOAN_DUE_DATE</COLUMN><COLUMN>LOAN_WRITTEN_OFF</COLUMN><COLUMN>MID_WAY_DATE</COLUMN><COLUMN>NUM_DAYS_OVERDUE</COLUMN><COLUMN>NUM_LOANS_REPAID</COLUMN><COLUMN>OPTOUT_COMING_DUE_EMAIL</COLUMN><COLUMN>OPTOUT_COMING_DUE_SMS</COLUMN><COLUMN>OPTOUT_DROPOFFS_EMAIL</COLUMN><COLUMN>OPTOUT_DROPOFFS_SMS</COLUMN><COLUMN>OPTOUT_NEWSLETTER_EMAIL</COLUMN><COLUMN>OPTOUT_NEWSLETTER_SMS</COLUMN><COLUMN>OPTOUT_NOTICES_SMS</COLUMN><COLUMN>PAYMENT_POWER</COLUMN><COLUMN>PREMIUM_ENROLLMENT_DATE</COLUMN><COLUMN>REPAYMENT_DATE</COLUMN><COLUMN>SOURCE</COLUMN><COLUMN>STATE</COLUMN><COLUMN>SUSPENDED</COLUMN><COLUMN>TOTAL_OUTSTANDING_LOANS</COLUMN></EXPORT_COLUMNS></ExportList></Body></Envelope>"
         end
-
 
         let(:destination_file) do
           File.expand_path('./support/ftp/temp.csv', File.dirname(__FILE__))
@@ -137,13 +144,67 @@ module Silverpop
         end
       end
 
-      it "send xml request" do
-        stub_request(:post, url).with(:body => request, 
-          :headers => {'Content-type' => 'text/xml'}).to_return(:body => response)
+      describe "raw_recipient_data_export" do
+        let(:request) do
+          "<Envelope><Body><RawRecipientDataExport>"+
+            "<COLUMNS>"+
+              "<COLUMN><NAME>CustomerID</NAME></COLUMN>"+
+              "<COLUMN><NAME>Address</NAME></COLUMN>"+
+            "</COLUMNS>"+
+            "<EVENT_DATE_START>12/01/2011 00:00:00</EVENT_DATE_START>"+
+            "<EVENT_DATE_END>12/02/2011 23:59:00</EVENT_DATE_END>"+
+            "<MOVE_TO_FTP/>"+
+            "<EXPORT_FORMAT>0</EXPORT_FORMAT>"+
+            "<EMAIL>admin@yourorg.com</EMAIL>"+
+            "<ALL_EVENT_TYPES/>"+
+            "<INCLUDE_INBOX_MONITORING/>"+
+          "</RawRecipientDataExport></Body></Envelope>"
+        end
 
-        @engage = Engage.new
+        let(:response) do
+          "<Envelope><Body><RESULT>"+
+            "<SUCCESS>TRUE</SUCCESS>"+
+            "<MAILING>"+
+              "<JOB_ID>72649</JOB_ID>"+
+              "<FILE_PATH>/download/file.csv</FILE_PATH>"+
+            "</MAILING>"+
+          "</RESULT></Body></Envelope>"
+        end
 
-        @engage.query(request)
+        let(:destination_file) do
+          File.expand_path('./support/ftp/temp.csv', File.dirname(__FILE__))
+        end
+
+        before(:each) do
+          @engage = Engage.new          
+          @options = Engage::RawRecipientDataOptions.new.tap do |opt|
+            opt.event_date_start = "12/01/2011 00:00:00"
+            opt.event_date_end   = "12/02/2011 23:59:00"
+            opt.move_to_ftp      = true
+            opt.export_format    = "0"
+            opt.email            = "admin@yourorg.com"
+            opt.all_event_types  = true
+            opt.include_inbox_monitoring = true
+            opt.columns << "CustomerID"
+            opt.columns << "Address"
+          end
+          stub_request(:post, url).with(:body => request).to_return(:body => response)
+        end
+
+        it "sends xml request" do
+          Net::FTP.stub(:new).and_return(double('ftp').as_null_object)
+
+          @engage.raw_recipient_data_export(@options, destination_file).should be_success
+        end
+
+        it "returns csv file" do
+          etalon_file = File.expand_path('./support/ftp/folder/download/file.csv', 
+            File.dirname(__FILE__))
+          
+          @engage.raw_recipient_data_export(@options, destination_file).should be_success
+
+          destination_file.should be_same_file_as(etalon_file)
+        end
       end
     end
 
@@ -173,9 +234,10 @@ module Silverpop
         list_id = 2126944
         
         puts "**********************************************************"
-        puts "before running this test please ensure that:"
-        puts "- there's a database with id #{list_id} on the silverpop service"
-        puts "- this database has 39 fields"
+        puts "before running this test please do next:"
+        puts "- go to silverpop service"
+        puts "- there should be database for test purpose"
+        puts "- that database should have #{list_id} id and 39 fields"
         puts "- and it has 3 contacts"
         puts "**********************************************************"
         
