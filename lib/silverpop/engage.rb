@@ -191,7 +191,7 @@ module Silverpop
       ftp.passive = true # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
       ftp.login(ftp_username, ftp_password)
       ftp.chdir('download')
-      
+
       retry_on { ftp.gettextfile(file_name, destination_file) }
       
       ftp.close
