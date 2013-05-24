@@ -4,4 +4,5 @@ gemspec
 
 gem 'hpricot'
 gem 'activesupport'
+gem 'rainbow'
 

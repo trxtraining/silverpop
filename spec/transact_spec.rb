@@ -1,6 +1,7 @@
 require 'spec_helper'
 require 'support/ftp/server'
 require 'webmock/rspec'
+require 'rainbow'
 
 module Silverpop
 
@@ -68,6 +69,12 @@ module Silverpop
     end
 
     it "create compaign" do
+      puts "\n"
+      puts "**********************************************************".color(:blue).background(:yellow)
+      puts "            ATTENTION !!!                                 ".color(:blue).background(:yellow)
+      puts " for the current moment the test for transact doesn't work".color(:blue).background(:yellow)
+      puts "**********************************************************".color(:blue).background(:yellow)
+
       recipient = { 
         :email => 'test@test.com', 
         :personalizations => [

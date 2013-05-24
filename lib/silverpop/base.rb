@@ -78,11 +78,12 @@ module Silverpop
       begin
         yield
       rescue Net::FTPPermError => error
-        if attempts < 0 
+        if attempts <= 0 
           raise error
         else
           attempts -= 1
           puts "#{attempts} attempts remain"
+          sleep 20
           retry
         end
       end

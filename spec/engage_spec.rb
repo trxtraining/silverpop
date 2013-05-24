@@ -176,8 +176,8 @@ module Silverpop
         puts "before running this test please do next:"
         puts "- go to silverpop service"
         puts "- there should be database for test purpose"
-        puts "- that database should have #{list_id} id and 39 fields"
-        puts "- and it has 3 contacts"
+        puts "- that database should have #{list_id} id"
+        puts "- and it has 6 contacts"
         puts "**********************************************************"
         
         @engage = Engage.new
