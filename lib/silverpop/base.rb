@@ -83,7 +83,7 @@ module Silverpop
         else
           attempts -= 1
           puts "#{attempts} attempts remain"
-          sleep 10
+          sleep 20
           retry
         end
       end

@@ -222,31 +222,60 @@ module Silverpop
         end
       end
 
-      let(:destination_file) do
-        File.expand_path('./support/downloaded.csv', File.dirname(__FILE__))
+      describe "export_list" do
+        
+        let(:destination_file) do
+          File.expand_path('./support/downloaded.csv', File.dirname(__FILE__))
+        end
+
+        let(:etalon_file) do
+          File.expand_path('./support/etalon.csv', File.dirname(__FILE__))
+        end
+        
+        it "return csv file" do
+          list_id = 2126944
+          
+          puts "**********************************************************"
+          puts "before running this test please do next:"
+          puts "- go to silverpop service"
+          puts "- there should be database for test purpose"
+          puts "- that database should have #{list_id} id and 39 fields"
+          puts "- and it has 3 contacts"
+          puts "**********************************************************"
+          
+          @engage = Engage.new.tap { |e| e.login }
+
+          @engage.export_list(list_id, fields, destination_file)
+
+          destination_file.should be_same_file_as(etalon_file)
+        end
       end
 
-      let(:etalon_file) do
-        File.expand_path('./support/etalon.csv', File.dirname(__FILE__))
-      end
-      
-      it "return csv file" do
-        list_id = 2126944
-        
-        puts "**********************************************************"
-        puts "before running this test please do next:"
-        puts "- go to silverpop service"
-        puts "- there should be database for test purpose"
-        puts "- that database should have #{list_id} id and 39 fields"
-        puts "- and it has 3 contacts"
-        puts "**********************************************************"
-        
-        @engage = Engage.new
-        @engage.login
+      describe "raw_recipient_data_export" do
 
-        @engage.export_list(list_id, fields, destination_file)
+        let(:destination_file) do
+          File.expand_path('./support/rrde_temp.zip', File.dirname(__FILE__))
+        end
 
-        destination_file.should be_same_file_as(etalon_file)
+        it "returns zip file" do
+          @engage = Engage.new.tap { |e| e.login }
+          
+          @options = Engage::RawRecipientDataOptions.new.tap do |opt|
+            opt.event_date_start = "12/01/2013 00:00:00"
+            opt.event_date_end   = "12/05/2013 23:59:00"
+            opt.move_to_ftp      = true
+            opt.export_format    = "0"
+            opt.email            = "admin@yourorg.com"
+            opt.all_event_types  = true
+            opt.include_inbox_monitoring = true
+            opt.columns << "CustomerID"
+            opt.columns << "Address"
+          end
+
+          @engage.raw_recipient_data_export(@options, destination_file).should be_success
+          
+          destination_file.size.should == 53
+        end
       end
     end
   end
