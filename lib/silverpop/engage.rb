@@ -1,4 +1,5 @@
 require 'active_support/core_ext/object/blank'
+require 'ostruct'
 
 module Silverpop
 
@@ -115,6 +116,67 @@ module Silverpop
                               File.basename(source_file_path) )
     end
 
+    class RawRecipientDataOptions < OpenStruct
+      def initialize
+        super(:columns => [])
+      end
+
+      def fields
+        instance_variable_get("@table").keys
+      end
+
+      [:fields=, :columns=].each do |method|
+        define_method(method) do
+          raise ArgumentError, "'#{method}' is reserverd word in RawRecipientDataOptions"
+        end
+      end
+    end
+
+    def raw_recipient_data_export(options, destination_file)
+      xml = "<Envelope><Body><RawRecipientDataExport>"
+
+      options.fields.each_with_object(xml) do |field, string|
+        case field
+          when :columns
+            string << "<COLUMNS>"
+            options.columns.each do |column|
+              string << "<COLUMN><NAME>#{column}</NAME></COLUMN>"
+            end
+            string << "</COLUMNS>"
+          when Symbol
+            string << if (value = options.send(field)) == true
+              "<#{field.upcase}/>"
+            else
+              "<#{field.upcase}>#{value}</#{field.upcase}>"
+            end
+          else 
+            raise ArgumentError, "#{field} didn't match any case" 
+        end
+      end
+
+      xml << "</RawRecipientDataExport></Body></Envelope>"
+
+      response = query(xml)
+      doc = Hpricot::XML(response)
+      file_name = doc.at('FILE_PATH').innerHTML
+
+      # because of the net/ftp's lack we have to use Net::FTP.new construction
+      ftp = Net::FTP.new
+
+      # need for testing
+      ftp_port ? ftp.connect(ftp_url, ftp_port) : ftp.connect(ftp_url)
+
+      ftp.passive = true # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
+      ftp.login(ftp_username, ftp_password)
+      ftp.chdir('download')
+      
+      retry_on { ftp.gettextfile(file_name, destination_file) }
+      
+      ftp.close
+
+      self
+    end
+
     def export_list(id, fields, destination_file)
       xml = get_list(id, fields)
       doc = Hpricot::XML(xml)
@@ -129,7 +191,7 @@ module Silverpop
       ftp.passive = true # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
       ftp.login(ftp_username, ftp_password)
       ftp.chdir('download')
-      
+
       retry_on { ftp.gettextfile(file_name, destination_file) }
       
       ftp.close
