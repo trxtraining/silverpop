@@ -74,21 +74,18 @@ module Silverpop
 
     private
 
-    def retry_on(attempts=10)
-      begin
+    def on_job_ready(job_id)
+      while ['WAITING', 'RUNNING'].include? (status = get_job_status(job_id))
+        puts "#{Time.now} Job #{job_id}: #{status}"
+        sleep 5
+      end
+      puts "#{Time.now} Job #{job_id}: #{status}"
+
+      if status == 'COMPLETE'
         yield
-      rescue Net::FTPPermError => error
-        if attempts <= 0 
-          raise error
-        else
-          attempts -= 1
-          puts "#{attempts} attempts remain"
-          sleep 20
-          retry
-        end
+      else
+        raise ArgumentError, "#{status} status, Silverpop service didn't finish #{job_id} job"
       end
     end
-
   end
-
 end

@@ -51,6 +51,30 @@ module Silverpop
         TOTAL_OUTSTANDING_LOANS ]
     end
 
+    let(:running_status) do
+      "<Envelope><Body><RESULT>"+
+        "<SUCCESS>TRUE</SUCCESS>"+
+        "<JOB_ID>789052</JOB_ID>"+
+        "<JOB_STATUS>RUNNING</JOB_STATUS>"+            
+      "</RESULT></Body></Envelope>"
+    end
+
+    let(:waiting_status) do
+      "<Envelope><Body><RESULT>"+
+        "<SUCCESS>TRUE</SUCCESS>"+
+        "<JOB_ID>789052</JOB_ID>"+
+        "<JOB_STATUS>WAITING</JOB_STATUS>"+            
+      "</RESULT></Body></Envelope>"
+    end
+
+    let(:complete_status) do
+      "<Envelope><Body><RESULT>"+
+        "<SUCCESS>TRUE</SUCCESS>"+
+        "<JOB_ID>789052</JOB_ID>"+
+        "<JOB_STATUS>COMPLETE</JOB_STATUS>"+            
+      "</RESULT></Body></Envelope>"
+    end
+
     describe "Local tests" do
 
       before(:all) do
@@ -121,21 +145,20 @@ module Silverpop
 
         before(:each) do
           @engage = Engage.new
+          stub_request(:post, url).
+            to_return(:body => response).
+            to_return(:body => waiting_status).
+            to_return(:body => running_status).
+            to_return(:body => complete_status)
         end
 
         it "send xml request" do
-          stub_request(:post, url).with(:body => export_list_request).
-            to_return(:body => response)
-          
           Net::FTP.stub(:new).and_return(double('ftp').as_null_object)
 
           @engage.export_list(list_id, fields, destination_file).should be_success
         end
 
         it "return csv file" do
-          stub_request(:post, url).with(:body => export_list_request).
-            to_return(:body => response)
-          
           etalon_file = File.expand_path('./support/ftp/folder/download/file.csv', 
             File.dirname(__FILE__))
           @engage.export_list(list_id, fields, destination_file)
@@ -188,7 +211,11 @@ module Silverpop
             opt.columns << "CustomerID"
             opt.columns << "Address"
           end
-          stub_request(:post, url).with(:body => request).to_return(:body => response)
+          stub_request(:post, url).
+            to_return(:body => response).
+            to_return(:body => waiting_status).
+            to_return(:body => running_status).
+            to_return(:body => complete_status)
         end
 
         it "sends xml request" do
@@ -261,11 +288,11 @@ module Silverpop
           @engage = Engage.new.tap { |e| e.login }
           
           @options = Engage::RawRecipientDataOptions.new.tap do |opt|
-            opt.event_date_start = "12/01/2013 00:00:00"
-            opt.event_date_end   = "12/05/2013 23:59:00"
+            opt.event_date_start = "10/06/2013 00:00:00"
+            opt.event_date_end   = "12/06/2013 23:59:00"
             opt.move_to_ftp      = true
             opt.export_format    = "0"
-            opt.email            = "admin@yourorg.com"
+            opt.email            = "megas@ukr.net"
             opt.all_event_types  = true
             opt.include_inbox_monitoring = true
             opt.columns << "CustomerID"

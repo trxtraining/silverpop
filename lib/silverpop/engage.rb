@@ -67,6 +67,7 @@ module Silverpop
     ###
     def get_job_status(job_id)
       response_xml = query( xml_get_job_status(job_id) )
+      Hpricot::XML( response_xml ).at('JOB_STATUS').innerHTML
     end
 
     ###
@@ -159,20 +160,24 @@ module Silverpop
       response = query(xml)
       doc = Hpricot::XML(response)
       file_name = doc.at('FILE_PATH').innerHTML
+      job_id = doc.at('JOB_ID').innerHTML
 
-      # because of the net/ftp's lack we have to use Net::FTP.new construction
-      ftp = Net::FTP.new
+      on_job_ready(job_id) do
 
-      # need for testing
-      ftp_port ? ftp.connect(ftp_url, ftp_port) : ftp.connect(ftp_url)
+        # because of the net/ftp's lack we have to use Net::FTP.new construction
+        ftp = Net::FTP.new
 
-      ftp.passive = true # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
-      ftp.login(ftp_username, ftp_password)
-      ftp.chdir('download')
-      
-      retry_on { ftp.gettextfile(file_name, destination_file) }
-      
-      ftp.close
+        # need for testing
+        ftp_port ? ftp.connect(ftp_url, ftp_port) : ftp.connect(ftp_url)
+
+        ftp.passive = true # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
+        ftp.login(ftp_username, ftp_password)
+        ftp.chdir('download')
+        
+        ftp.gettextfile(file_name, destination_file)
+        
+        ftp.close
+      end
 
       self
     end
@@ -181,20 +186,24 @@ module Silverpop
       xml = get_list(id, fields)
       doc = Hpricot::XML(xml)
       file_name = doc.at('FILE_PATH').innerHTML
+      job_id = doc.at('JOB_ID').innerHTML
 
-      # because of the net/ftp's lack we have to use Net::FTP.new construction
-      ftp = Net::FTP.new
+      on_job_ready(job_id) do
 
-      # need for testing
-      ftp_port ? ftp.connect(ftp_url, ftp_port) : ftp.connect(ftp_url)
+        # because of the net/ftp's lack we have to use Net::FTP.new construction
+        ftp = Net::FTP.new
 
-      ftp.passive = true # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
-      ftp.login(ftp_username, ftp_password)
-      ftp.chdir('download')
+        # need for testing
+        ftp_port ? ftp.connect(ftp_url, ftp_port) : ftp.connect(ftp_url)
 
-      retry_on { ftp.gettextfile(file_name, destination_file) }
-      
-      ftp.close
+        ftp.passive = true # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
+        ftp.login(ftp_username, ftp_password)
+        ftp.chdir('download')
+
+        ftp.gettextfile(file_name, destination_file)
+        
+        ftp.close
+      end
     end
 
     def import_table(map_file_path, source_file_path)
