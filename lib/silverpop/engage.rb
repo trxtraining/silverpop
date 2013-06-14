@@ -174,7 +174,7 @@ module Silverpop
         ftp.login(ftp_username, ftp_password)
         ftp.chdir('download')
         
-        ftp.gettextfile(file_name, destination_file)
+        ftp.getbinaryfile(file_name, destination_file)
         
         ftp.close
       end
