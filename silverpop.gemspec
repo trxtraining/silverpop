@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name     = "silverpop"
-  s.version  = "1.1.1"
-  s.date     = "2011-07-13"
+  s.version  = "1.2.0"
+  s.date     = "2013-07-01"
   s.summary  = "Silverpop Engage and Transact API -- Extracted from ShoeDazzle.com, gemified by Billfloat"
   s.email    = "bill@billfloat.com"
   s.homepage = "http://github.com/billfloat/silverpop/tree/master"
