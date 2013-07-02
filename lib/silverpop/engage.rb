@@ -1,21 +1,16 @@
+require 'active_support/core_ext/object/blank'
+require 'ostruct'
+
 module Silverpop
 
   class Engage < Silverpop::Base
 
-    API_POST_URL  = 'https://api3.silverpop.com/XMLAPI'
-    FTP_POST_URL  = 'transfer3.silverpop.com'
-        TMP_WORK_PATH = "#{RAILS_ROOT}/tmp/"
-
-    def username
-      Spree::Config[:silverpop_engage_username]
+    class << self
+      attr_accessor :url, :username, :password
+      attr_accessor :ftp_url, :ftp_port, :ftp_username, :ftp_password
     end
 
-    def password
-      Spree::Config[:silverpop_engage_password]
-    end
-
-    def initialize()
-      super API_POST_URL
+    def initialize
       @session_id, @session_encoding, @response_xml = nil, nil, nil
     end
 
@@ -23,12 +18,9 @@ module Silverpop
     #   QUERY AND SERVER RESPONSE
     ###
     def query(xml)
-      se = @session_encoding.nil? ? '' : @session_encoding
-      @response_xml = super(xml, se)
-
-      log_error unless success?
-
-      @response_xml
+      (@response_xml = super(xml, @session_encoding.to_s)).tap do 
+        log_error unless success?
+      end
     end
 
     def success?
@@ -40,7 +32,6 @@ module Silverpop
 
     def error_message
       return false if success?
-
       doc = Hpricot::XML(@response_xml)
       strip_cdata( doc.at('FaultString').innerHTML )
     end
@@ -76,13 +67,14 @@ module Silverpop
     ###
     def get_job_status(job_id)
       response_xml = query( xml_get_job_status(job_id) )
+      Hpricot::XML( response_xml ).at('JOB_STATUS').innerHTML
     end
 
     ###
     #   LIST MANAGEMENT
     ###
     def get_lists(visibility, list_type)
-      # VISIBILITY 
+      # VISIBILITY
       # Required. Defines the visibility of the lists to return.
       # * 0 – Private
       # * 1 – Shared
@@ -95,7 +87,13 @@ module Silverpop
       # * 5 – Test Lists
       # * 6 – Seed Lists
       # * 13 – Suppression Lists
+      # * 15 – Relational Tables
+      # * 18 – Contact Lists
       response_xml = query( xml_get_lists(visibility, list_type) )
+    end
+
+    def get_list(id, fields)
+      response_xml = query( xml_export_list(id, fields) )
     end
 
     def calculate_query(query_id, email = nil)
@@ -103,9 +101,9 @@ module Silverpop
     end
 
     def import_list(map_file_path, source_file_path)
-      Net::FTP.open(FTP_POST_URL) do |ftp|
+      Net::FTP.open(ftp_url) do |ftp|
         ftp.passive = true  # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
-        ftp.login(username, password)
+        ftp.login(ftp_username, ftp_password)
         ftp.chdir('upload')
         ftp.puttextfile(map_file_path)
         ftp.puttextfile(source_file_path)
@@ -118,8 +116,114 @@ module Silverpop
                               File.basename(map_file_path),
                               File.basename(source_file_path) )
     end
-    
-    def create_map_file (file_path, list_info, columns, mappings)
+
+    class RawRecipientDataOptions < OpenStruct
+      def initialize
+        super(:columns => [])
+      end
+
+      def fields
+        instance_variable_get("@table").keys
+      end
+
+      [:fields=, :columns=].each do |method|
+        define_method(method) do
+          raise ArgumentError, "'#{method}' is reserverd word in RawRecipientDataOptions"
+        end
+      end
+    end
+
+    def raw_recipient_data_export(options, destination_file)
+      xml = "<Envelope><Body><RawRecipientDataExport>"
+
+      options.fields.each_with_object(xml) do |field, string|
+        case field
+          when :columns
+            string << "<COLUMNS>"
+            options.columns.each do |column|
+              string << "<COLUMN><NAME>#{column}</NAME></COLUMN>"
+            end
+            string << "</COLUMNS>"
+          when Symbol
+            string << if (value = options.send(field)) == true
+              "<#{field.upcase}/>"
+            else
+              "<#{field.upcase}>#{value}</#{field.upcase}>"
+            end
+          else 
+            raise ArgumentError, "#{field} didn't match any case" 
+        end
+      end
+
+      xml << "</RawRecipientDataExport></Body></Envelope>"
+
+      response = query(xml)
+      doc = Hpricot::XML(response)
+      file_name = doc.at('FILE_PATH').innerHTML
+      job_id = doc.at('JOB_ID').innerHTML
+
+      on_job_ready(job_id) do
+
+        # because of the net/ftp's lack we have to use Net::FTP.new construction
+        ftp = Net::FTP.new
+
+        # need for testing
+        ftp_port ? ftp.connect(ftp_url, ftp_port) : ftp.connect(ftp_url)
+
+        ftp.passive = true # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
+        ftp.login(ftp_username, ftp_password)
+        ftp.chdir('download')
+        
+        ftp.getbinaryfile(file_name, destination_file)
+        
+        ftp.close
+      end
+
+      self
+    end
+
+    def export_list(id, fields, destination_file)
+      xml = get_list(id, fields)
+      doc = Hpricot::XML(xml)
+      file_name = doc.at('FILE_PATH').innerHTML
+      job_id = doc.at('JOB_ID').innerHTML
+
+      on_job_ready(job_id) do
+
+        # because of the net/ftp's lack we have to use Net::FTP.new construction
+        ftp = Net::FTP.new
+
+        # need for testing
+        ftp_port ? ftp.connect(ftp_url, ftp_port) : ftp.connect(ftp_url)
+
+        ftp.passive = true # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
+        ftp.login(ftp_username, ftp_password)
+        ftp.chdir('download')
+
+        ftp.gettextfile(file_name, destination_file)
+        
+        ftp.close
+      end
+    end
+
+    def import_table(map_file_path, source_file_path)
+      Net::FTP.open(ftp_url) do |ftp|
+        ftp.passive = true  # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
+        ftp.login(ftp_username, ftp_password)
+        ftp.chdir('upload')
+        ftp.puttextfile(map_file_path)
+        ftp.puttextfile(source_file_path)
+      end
+
+      map_file_ftp_path = File.basename(map_file_path)
+      source_file_ftp_path = File.basename(source_file_path)
+
+      response_xml = query xml_import_table(
+                              File.basename(map_file_path),
+                              File.basename(source_file_path) )
+    end
+
+    def create_map_file (file_path, list_info, columns, mappings, type = "LIST")
       # SAMPLE_PARAMS:
       # list_info = { :action       => 'ADD_AND_UPDATE',
       #               :list_id      => 123456,
@@ -133,7 +237,7 @@ module Silverpop
       #               { :index=>3, :name=>'LAST_NAME', :include=>true } ]
 
       File.open(file_path, 'w') do |file|
-        file.puts xml_map_file(list_info, columns, mappings)
+        file.puts xml_map_file(list_info, columns, mappings, type)
       end
 
       file_path
@@ -179,10 +283,36 @@ module Silverpop
       response_xml = query xml_opt_out_recipient(list_id, email)
     end
 
+    def insert_update_relational_data(table_id, data)
+      response_xml = query xml_insert_update_relational_data(table_id, data)
+    end
+
+    def create_relational_table(schema)
+      response_xml = query xml_create_relational_table(schema)
+    end
+
+    def associate_relational_table(list_id, table_id, field_mappings)
+      response_xml = query xml_associate_relational_table(list_id, table_id, field_mappings)
+    end
+
   ###
   #   API XML TEMPLATES
   ###
   protected
+  
+    def map_type(type) # some API calls want a number, some want a name. This maps the name back to the number
+      {
+        "TEXT" => 0,
+        "YESNO" => 1,
+        "NUMERIC" => 2,
+        "DATE" => 3,
+        "TIME" => 4,
+        "COUNTRY" => 5,
+        "SELECTION" => 6,
+        "SEGMENTING" => 8,
+        "EMAIL" => 9
+      }[type]
+    end
 
     def log_error
       logger.debug '*** Silverpop::Engage Error: ' + error_message
@@ -221,6 +351,21 @@ module Silverpop
       ) % [visibility.to_s, list_type.to_s]
     end
 
+    def xml_export_list(id, fields)
+      ( '<Envelope><Body>'+
+          '<ExportList>'+
+            '<LIST_ID>%d</LIST_ID>'+
+            '<EXPORT_TYPE>ALL</EXPORT_TYPE>'+
+            '<EXPORT_FORMAT>CSV</EXPORT_FORMAT>'+
+            '<ADD_TO_STORED_FILES/>'+
+            '<EXPORT_COLUMNS>'+
+              fields.map { |f| '<COLUMN>%s</COLUMN>' % f }.join+
+            '</EXPORT_COLUMNS>'+
+          '</ExportList>'+
+        '</Body></Envelope>'
+      ) % id
+    end
+
     def xml_calculate_query(query_id, email)
       xml = ( '<Envelope><Body>'+
                 '<CalculateQuery>'+
@@ -245,18 +390,28 @@ module Silverpop
         '</Body></Envelope>'
       ) % [map_file, source_file]
     end
-    
-    def xml_map_file(list_info, columns, mappings)
+
+    def xml_import_table(map_file, source_file)
+      ( '<Envelope><Body>'+
+          '<ImportTable>'+
+            '<MAP_FILE>%s</MAP_FILE>'+
+            '<SOURCE_FILE>%s</SOURCE_FILE>'+
+          '</ImportTable>'+
+        '</Body></Envelope>'
+      ) % [map_file, source_file]
+    end
+
+    def xml_map_file(list_info, columns, mappings, type="LIST")
       return false unless (columns.size > 0 && mappings.size > 0)
 
-      xml = '<LIST_IMPORT>'+
-              '<LIST_INFO></LIST_INFO>'+
+      xml = "<#{type}_IMPORT>"+
+              "<#{type}_INFO></#{type}_INFO>"+
               '<COLUMNS></COLUMNS>'+
               '<MAPPING></MAPPING>'+
-            '</LIST_IMPORT>'
+            "</#{type}_IMPORT>"
 
       doc = Hpricot::XML(xml)
-      doc.at('LIST_INFO').innerHTML = xml_map_file_list_info(list_info)
+      doc.at("#{type}_INFO").innerHTML = xml_map_file_list_info(list_info, type)
 
       str = ''
       columns.each { |c| str += xml_map_file_column(c) }
@@ -269,7 +424,7 @@ module Silverpop
       doc.to_s
     end
 
-    def xml_map_file_list_info(list_info)
+    def xml_map_file_list_info(list_info, type = "LIST")
       # ACTION:
       #   Defines the type of list import you are performing. The following is a
       #   list of valid values and how interprets them:
@@ -292,21 +447,24 @@ module Silverpop
       # FILE_TYPE:
       #   Defines the formatting of the source file. Supported values are:
       #   0 – CSV file, 1 – Tab-separated file, 2 – Pipe-separated file
-      
+
       # HASHEADERS
       #   The HASHEADERS element is set to true if the first line in the source
       #   file contains column definitions. The List Import API does not use
       #   these headers, so if you have them, this element must be set to true
       #   so it can skip the first line.
-
       ( '<ACTION>%s</ACTION>'+
-        '<LIST_ID>%s</LIST_ID>'+
+        "<#{type}_NAME>%s</#{type}_NAME>"+
+        "<#{type}_ID>%s</#{type}_ID>"+
         '<FILE_TYPE>%s</FILE_TYPE>'+
-        '<HASHEADERS>%s</HASHEADERS>'
+        '<HASHEADERS>%s</HASHEADERS>'+
+        "<#{type}_VISIBILITY>%s</#{type}_VISIBILITY>"
       ) % [ list_info[:action],
+            list_info[:list_name],
             list_info[:list_id],
             list_info[:file_type],
-            list_info[:has_headers] ]
+            list_info[:has_headers],
+            list_info[:list_visibility] ]
     end
 
     def xml_map_file_column(column)
@@ -342,7 +500,7 @@ module Silverpop
 
     def xml_map_file_mapping_column(column)
       column = { :include => true }.merge(column)
-      
+
       ( '<COLUMN>'+
           '<INDEX>%s</INDEX>'+
           '<NAME>%s</NAME>'+
@@ -442,6 +600,95 @@ module Silverpop
       ) % [list_id, email]
     end
 
-  end
+    def xml_insert_update_relational_data(table_id, data)
+      ( '<Envelope><Body>'+
+          '<InsertUpdateRelationalTable>'+
+            '<TABLE_ID>%s</TABLE_ID>'+
+            '<ROWS>%s</ROWS>'+
+          '</InsertUpdateRelationalTable>'+
+        '</Body></Envelope>'
+      ) % [table_id, xml_add_relational_rows(data)]
+    end
 
+    def xml_add_relational_rows(data)
+      rows = ''
+      data.each do |row|
+        row = ('<ROW>'+
+          '%s'+
+          '</ROW>'
+        ) % xml_add_relational_row(row)
+        rows << row
+      end
+      rows
+    end
+
+    def xml_add_relational_row(row_data)
+      row = ''
+      row_data.each do |column|
+        col = ( '<COLUMN name="%s">'+
+            '<![CDATA[%s]]>'+
+          '</COLUMN>'
+        ) % [column[:name], column[:value]]
+        row << col
+      end
+      row
+    end
+
+    def xml_create_relational_table(schema)
+      xml = ('<Envelope><Body>'+
+        '<CreateTable>'+
+          '<TABLE_NAME>%s</TABLE_NAME>'+
+          '<COLUMNS></COLUMNS>'+
+        '</CreateTable>'+
+      '</Body></Envelope>') % [schema[:table_name]]
+
+      doc = Hpricot::XML(xml)
+      if schema[:columns].size > 0
+        schema[:columns].each do |c|
+          element = doc/:COLUMNS
+          if element.innerHTML.empty?
+            (doc/:COLUMNS).innerHTML= xml_add_relational_table_column(c)
+          else
+            (doc/:COLUMNS).append xml_add_relational_table_column(c)
+          end
+        end
+      end
+
+      doc.to_s
+    end
+
+    def xml_add_relational_table_column(col)
+      xml = "<COLUMN>"
+      xml << "<NAME>%s</NAME>" % [col[:name]] if col[:name]
+      xml << "<TYPE>%s</TYPE>" % [col[:type]] if col[:type]
+      xml << "<IS_REQUIRED>%s</IS_REQUIRED>" % [col[:is_required]] if col[:is_required]
+      xml << "<KEY_COLUMN>%s</KEY_COLUMN>" % [col[:key_column]] if col[:key_column]
+      xml << "</COLUMN>"
+    end
+
+    def xml_associate_relational_table(list_id, table_id, field_mappings)
+      xml = ('<Envelope><Body>'+
+        '<JoinTable>'+
+          '<TABLE_ID>%s</TABLE_ID>'+
+          '<LIST_ID>%s</LIST_ID>'+
+        '</JoinTable>'+
+      '</Body></Envelope>') % [table_id, list_id]
+
+      doc = Hpricot::XML(xml)
+      if field_mappings.size > 0
+        field_mappings.each do |m|
+          (doc/:JoinTable).append xml_add_relational_table_mapping(m)
+        end
+      end
+
+      doc.to_s
+    end
+
+    def xml_add_relational_table_mapping(mapping)
+      ('<MAP_FIELD>'+
+        '<LIST_FIELD>%s</LIST_FIELD>'+
+        '<TABLE_FIELD>%s</TABLE_FIELD>'+
+      '</MAP_FIELD>') % [mapping[:list_name], mapping[:table_name]]
+    end
+  end
 end
