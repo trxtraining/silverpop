@@ -2,27 +2,30 @@ module Silverpop
 
   class Transact < Silverpop::Base
 
+    attr_accessor :response_doc, :query_doc, :xml
+    protected :response_doc, :query_doc, :xml
+
     class << self
       attr_accessor :url, :ftp_url, :username, :password
     end
 
     def initialize(campaign_id, recipients=[], options={})
-      @query_doc, @response_doc = nil, nil
+      query_doc, response_doc = nil, nil
       xml_template(campaign_id, recipients, options)
     end
 
     def query_xml
-      return '' if @query_doc.nil?
-      @query_doc.to_s
+      return '' if query_doc.nil?
+      query_doc.to_s
     end
 
     def response_xml
-      return '' if @response_doc.nil?
-      @response_doc.to_s
+      return '' if response_doc.nil?
+      response_doc.to_s
     end
 
     def query
-      @response_doc = Hpricot::XML( super(@query_doc.to_s) )
+      self.response_doc = Hpricot::XML( super(query_doc.to_s) )
       log_error unless success?
     end
 
@@ -45,18 +48,18 @@ module Silverpop
     end
 
     def success?
-      @response_doc.at('STATUS').innerHTML.to_i == 0
+      response_doc.at('STATUS').innerHTML.to_i == 0
     end
 
     def error_message
-      return 'Query has not been executed.' if @response_doc.blank?
+      return 'Query has not been executed.' if response_doc.blank?
       return false if success?
-      @response_doc.at('ERROR_STRING').innerHTML
+      response_doc.at('ERROR_STRING').innerHTML
     end
 
     def add_recipient(recipient)
       return if recipient.blank?
-      (@query_doc/:XTMAILING).append build_recipient(recipient)
+      (query_doc/:XTMAILING).append build_recipient(recipient)
     end
 
     def add_recipients(recipients)
@@ -65,7 +68,7 @@ module Silverpop
       recipients.each do |recipient|
         recipients_xml += build_recipient(recipient)
       end
-      (@query_doc/:XTMAILING).append recipients_xml
+      (query_doc/:XTMAILING).append recipients_xml
     end
 
     def add_personalizations(recipient_xml, personalizations)
@@ -87,9 +90,11 @@ module Silverpop
     end
 
     def log_error
-      log :error, "Silverpop::Transact Error:   #{error_message}"
-      log :warn, "@xml:\n#{@xml.inspect}"
-      log :info, "@query_doc:\n#{@query_doc.inspect}"
+      if defined?(Rails)
+        log :error, "Silverpop::Transact Error:   #{error_message}"
+        log :warn, "@xml:\n#{xml.inspect}"
+        log :info, "@query_doc:\n#{query_doc.inspect}"
+      end
     end
 
     def log_warn(message)
@@ -100,25 +105,25 @@ module Silverpop
       options = { :transaction_id       => '',
             :show_all_send_detail => 'true',
             :send_as_batch        => 'false',
-            :no_retry_on_failure  => 'false'
+            :no_retry_on_failure  => 'false',
+            :save_columns => []
           }.merge options
-
-      @xml = (
+      self.xml = (
         "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"+
         "<XTMAILING>\n"+
           "<CAMPAIGN_ID>%s</CAMPAIGN_ID>\n"+
           "<SHOW_ALL_SEND_DETAIL>%s</SHOW_ALL_SEND_DETAIL>\n"+
           "<SEND_AS_BATCH>%s</SEND_AS_BATCH>\n"+
           "<NO_RETRY_ON_FAILURE>%s</NO_RETRY_ON_FAILURE>\n"+
+          "#{ save_columns(options[:save_columns]) }"+
         "</XTMAILING>"
       ) % [ campaign_id,
             options[:show_all_send_detail],
             options[:send_as_batch],
             options[:no_retry_on_failure] ]
-      @query_doc = Hpricot::XML(@xml)
-
+      self.query_doc = Hpricot::XML(xml)
       unless options[:transaction_id].blank?
-        (@query_doc/:XTMAILING).append(
+        (query_doc/:XTMAILING).append(
             '<TRANSACTION_ID>%s</TRANSACTION_ID>' % options[:transaction_id] )
       end
 
@@ -144,6 +149,14 @@ module Silverpop
         <TAG_NAME>#{tag_name}</TAG_NAME>
         <VALUE>#{value}</VALUE>
       </PERSONALIZATION>)
+    end
+
+    def save_columns(fields)
+      unless fields.empty?
+        fields_xml = ""
+        fields.each { |field| fields_xml << %Q(<COLUMN_NAME>%s</COLUMN_NAME>\n) % field }
+        %Q(<SAVE_COLUMNS>\n%s</SAVE_COLUMNS>\n) % fields_xml
+      end
     end
   end
 end
