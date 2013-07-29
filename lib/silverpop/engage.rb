@@ -18,7 +18,7 @@ module Silverpop
     #   QUERY AND SERVER RESPONSE
     ###
     def query(xml)
-      (@response_xml = super(xml, @session_encoding.to_s)).tap do 
+      (@response_xml = super(xml, @session_encoding.to_s)).tap do
         log_error unless success?
       end
     end
@@ -150,8 +150,8 @@ module Silverpop
             else
               "<#{field.upcase}>#{value}</#{field.upcase}>"
             end
-          else 
-            raise ArgumentError, "#{field} didn't match any case" 
+          else
+            raise ArgumentError, "#{field} didn't match any case"
         end
       end
 
@@ -173,9 +173,9 @@ module Silverpop
         ftp.passive = true # IMPORTANT! SILVERPOP NEEDS THIS OR IT ACTS WEIRD.
         ftp.login(ftp_username, ftp_password)
         ftp.chdir('download')
-        
+
         ftp.getbinaryfile(file_name, destination_file)
-        
+
         ftp.close
       end
 
@@ -201,7 +201,7 @@ module Silverpop
         ftp.chdir('download')
 
         ftp.gettextfile(file_name, destination_file)
-        
+
         ftp.close
       end
     end
@@ -299,7 +299,7 @@ module Silverpop
   #   API XML TEMPLATES
   ###
   protected
-  
+
     def map_type(type) # some API calls want a number, some want a name. This maps the name back to the number
       {
         "TEXT" => 0,
@@ -315,7 +315,7 @@ module Silverpop
     end
 
     def log_error
-      logger.debug '*** Silverpop::Engage Error: ' + error_message
+      log :debug, '*** Silverpop::Engage Error: ' + error_message
     end
 
     def xml_login(username, password)

@@ -1,6 +1,5 @@
 require 'net/ftp'
 require 'ftpd'
-require 'logger'
 
 class FtpServer
 
@@ -29,10 +28,10 @@ class FtpServer
 
     ftp_folder = File.expand_path('./folder', File.dirname(__FILE__))
     driver = Driver.new(ftp_folder)
-    
+
     @@server = Ftpd::FtpServer.new(driver)
     @@server.server_name = "FtpServer"
-    @@server.log = Logger.new(STDOUT)
+    @@server.log = nil
     @@server.port = PORT
     @@server.start
 

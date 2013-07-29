@@ -1,5 +1,3 @@
-require 'logger' 
-
 module Silverpop
 
   def self.configure
@@ -9,8 +7,8 @@ module Silverpop
   class Base
 
     extend Forwardable
-    
-    def_delegators :'self.class', :url, :ftp_url, :ftp_port, :logger
+
+    def_delegators :'self.class', :url, :ftp_url, :ftp_port, :log
     def_delegators :'self.class', :username, :password, :ftp_username, :ftp_password
 
     class << self
@@ -48,12 +46,11 @@ module Silverpop
         Transact.password = password
       end
 
-      def logger
-        @@logger ||= Logger.new(STDOUT, 'weekly')
-      end
+      attr_accessor :logger
 
-      def logger=(logger)
-        @@logger = logger
+      def log(*args)
+        level = args.first.is_a?(Symbol) ? args.first : :error
+        logger.send(level, *args[1..-1]) if logger
       end
     end
 
