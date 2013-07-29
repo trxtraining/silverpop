@@ -6,7 +6,7 @@ module Silverpop
       attr_accessor :url, :ftp_url, :username, :password
     end
 
-    def initialize(campaign_id, recipients=[], options={}, logger=nil)
+    def initialize(campaign_id, recipients=[], options={})
       @query_doc, @response_doc = nil, nil
       xml_template(campaign_id, recipients, options)
     end
@@ -92,9 +92,9 @@ module Silverpop
   protected
 
     def log_error
-      logger.error "Silverpop::Transact Error:   #{error_message}"
-      logger.warn "@xml:\n#{@xml.inspect}"
-      logger.info "@query_doc:\n#{@query_doc.inspect}"
+      log :error, "Silverpop::Transact Error:   #{error_message}"
+      log :warn, "@xml:\n#{@xml.inspect}"
+      log :info, "@query_doc:\n#{@query_doc.inspect}"
     end
 
     def xml_template(campaign_id, recipients=[], options={})
@@ -123,12 +123,12 @@ module Silverpop
             '<TRANSACTION_ID>%s</TRANSACTION_ID>' % o[:transaction_id] )
       end
 
-      logger.warn "add_recipients(#{recipients.inspect})"
+      log :warn, "add_recipients(#{recipients.inspect})"
       add_recipients recipients
     end
 
     def xml_recipient(email)
-      logger.warn "xml_recipient(#{email.inspect})"
+      log :warn, "xml_recipient(#{email.inspect})"
 
       ( "\n" + '<RECIPIENT>'+
           '<EMAIL>%s</EMAIL>'+
@@ -138,17 +138,13 @@ module Silverpop
     end
 
     def xml_recipient_personalization(personalization)
-      logger.warn "xml_recipient_personalization(#{personalization.inspect})"
-
+      log :warn, "xml_recipient_personalization(#{personalization.inspect})"
       tag_name = personalization[:tag_name]
       value = personalization[:value]
-
-result = "<PERSONALIZATION>
-  <TAG_NAME>#{tag_name}</TAG_NAME>
-  <VALUE>#{value}</VALUE>
-</PERSONALIZATION>"
-
-      result
+      %Q(<PERSONALIZATION>
+        <TAG_NAME>#{tag_name}</TAG_NAME>
+        <VALUE>#{value}</VALUE>
+      </PERSONALIZATION>)
     end
 
   end

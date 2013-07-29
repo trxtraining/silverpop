@@ -15,6 +15,7 @@ Silverpop.configure do |config|
   config.engage_password = "password"
   config.engage_ftp_username = "mail@billfloat.com"
   config.engage_ftp_password = "password"
+  config.logger =  Logger.new(STDOUT)
 end
 
 Testing
@@ -52,7 +53,7 @@ ENGAGE
 
 
   Creating the gzipped CSV data file:
-  
+
     csv_file_path = 'LIST_DATA.csv.gz'
     users = User.all()
     Zlib::GzipWriter.open(csv_file_path) do |gz|
