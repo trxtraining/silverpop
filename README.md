@@ -130,5 +130,37 @@ TRANSACT
     transact.save_xml     file_path
     transact.submit_batch file_path
 
+  Options:
+
+    show_all_send_detail
+
+      Description: Sets the level of logging for all emails sent in the current submission. If it's true then complete logging of all emails sent for the current submission. If it's false then response document contains only logged information for emails with errors. By default it's true.
+
+    send_as_batch
+
+      Description: Notifies Transact that it does not need to send the submission in real time; it can execute it as a batch job. If it's true then send as batch job. If it's false then send in real time. By default it's false.
+
+    no_retry_on_failure
+
+      Description:  If the system encounters an error during the sending process (for example, PMTA failure, or Engage is offline), it will not retry sending the message. If it's true then if an error is encountered during the sending process, do not retry send. If it's false then retry send as soon as the error condition has been corrected. By default it's false.
+
+    save_columns
+
+      Description: Optional list of column names from the recipient elements to save to the database in Engage. By default it's empty.
+
+    Example:
+
+      campaign_id = 1234567
+
+      options = {
+        :show_all_send_detail => true,
+        :send_as_batch => false,
+        :no_retry_on_failure => false,
+        :save_columns => ["FIRST_NAME", "LAST_NAME"]
+      }
+
+      transact = Silverpop::Transact.new(campaign_id, recipients, options)
+      transact.save_xml     file_path
+      transact.submit_batch file_path
 
 Copyright (c) 2010 George Truong, released under the MIT license
