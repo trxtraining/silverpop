@@ -47,7 +47,7 @@ class SilverpopMailer
     @mail = Silverpop::Transact.new(campaign_id, [{:email => recipient, :personalizations => flat_hash_to_personalizations(personalizations)}])
     self
   end
-  
+
   def self.method_missing(name, *args)
     if name.to_s.match(/^deliver_/)
       creator = name.to_s.sub("deliver_", "")
@@ -78,7 +78,7 @@ class SilverpopMailer
       super
     end
   end
-  
+
   protected
     def flat_hash_to_personalizations(hash)
       #personalizations = [{:tag_name => "BILL_FLOAT_TEST_BODY", :value => "<![CDATA[This is the <b>body</b> of the email.]]>"}]

@@ -41,7 +41,6 @@ module Silverpop
         f.puts query_xml
         f.close
       end
-
       file_path
     end
 
@@ -57,27 +56,15 @@ module Silverpop
 
     def add_recipient(recipient)
       return if recipient.blank?
-
-      r_xml = xml_recipient recipient[:email]
-      if recipient[:personalizations].size > 0
-        r_xml = add_personalizations r_xml, recipient[:personalizations]
-      end
-
-      (@query_doc/:XTMAILING).append r_xml
+      (@query_doc/:XTMAILING).append build_recipient(recipient)
     end
 
     def add_recipients(recipients)
       return if recipients.blank?
-
       recipients_xml = ''
-      recipients.each do |r|
-        r_xml = xml_recipient r[:email]
-        if r[:personalizations].size > 0
-          r_xml = add_personalizations r_xml, r[:personalizations]
-        end
-        recipients_xml += r_xml
+      recipients.each do |recipient|
+        recipients_xml += build_recipient(recipient)
       end
-
       (@query_doc/:XTMAILING).append recipients_xml
     end
 
@@ -91,36 +78,48 @@ module Silverpop
 
   protected
 
+    def build_recipient(recipient)
+      r_xml = xml_recipient recipient[:email]
+      if recipient[:personalizations].size > 0
+        r_xml = add_personalizations r_xml, recipient[:personalizations]
+      end
+      r_xml
+    end
+
     def log_error
       log :error, "Silverpop::Transact Error:   #{error_message}"
       log :warn, "@xml:\n#{@xml.inspect}"
       log :info, "@query_doc:\n#{@query_doc.inspect}"
     end
 
+    def log_warn(message)
+      log(:warn, message) if defined?(Rails) && (not Rails.env.test?)
+    end
+
     def xml_template(campaign_id, recipients=[], options={})
-      o = { :transaction_id       => '',
+      options = { :transaction_id       => '',
             :show_all_send_detail => 'true',
             :send_as_batch        => 'false',
             :no_retry_on_failure  => 'false'
           }.merge options
 
       @xml = (
-        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+"\n"+
-        '<XTMAILING>'+"\n"+
-          '<CAMPAIGN_ID>%s</CAMPAIGN_ID>'+"\n"+
-          '<SHOW_ALL_SEND_DETAIL>%s</SHOW_ALL_SEND_DETAIL>'+"\n"+
-          '<SEND_AS_BATCH>%s</SEND_AS_BATCH>'+"\n"+
-          '<NO_RETRY_ON_FAILURE>%s</NO_RETRY_ON_FAILURE>'+"\n"+
-        '</XTMAILING>'
+        "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"+
+        "<XTMAILING>\n"+
+          "<CAMPAIGN_ID>%s</CAMPAIGN_ID>\n"+
+          "<SHOW_ALL_SEND_DETAIL>%s</SHOW_ALL_SEND_DETAIL>\n"+
+          "<SEND_AS_BATCH>%s</SEND_AS_BATCH>\n"+
+          "<NO_RETRY_ON_FAILURE>%s</NO_RETRY_ON_FAILURE>\n"+
+        "</XTMAILING>"
       ) % [ campaign_id,
-            o[:show_all_send_detail],
-            o[:send_as_batch],
-            o[:no_retry_on_failure] ]
+            options[:show_all_send_detail],
+            options[:send_as_batch],
+            options[:no_retry_on_failure] ]
       @query_doc = Hpricot::XML(@xml)
 
-      unless o[:transaction_id].blank?
+      unless options[:transaction_id].blank?
         (@query_doc/:XTMAILING).append(
-            '<TRANSACTION_ID>%s</TRANSACTION_ID>' % o[:transaction_id] )
+            '<TRANSACTION_ID>%s</TRANSACTION_ID>' % options[:transaction_id] )
       end
 
       log :warn, "add_recipients(#{recipients.inspect})"
@@ -146,7 +145,5 @@ module Silverpop
         <VALUE>#{value}</VALUE>
       </PERSONALIZATION>)
     end
-
   end
-
 end
