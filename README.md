@@ -22,7 +22,7 @@ Testing
 =======
 
 ```
-ENGAGE_INSTANCE=5 ENGAGE_USERNAME='engage_username@billfloat.com' ENGAGE_PASSWORD='engage_password' ENGAGE_FTP_USERNAME='engage_ftp_username@billfloat.com' ENGAGE_FTP_PASSWORD='engage_ftp_password' INCLUDE_REMOTE=true rspec spec
+CAMPAIGN_ID=123456 ENGAGE_INSTANCE=5 ENGAGE_USERNAME='engage_username@billfloat.com' ENGAGE_PASSWORD='engage_password' ENGAGE_FTP_USERNAME='engage_ftp_username@billfloat.com' ENGAGE_FTP_PASSWORD='engage_ftp_password' INCLUDE_REMOTE=true rspec spec
 ```
 
 Examples

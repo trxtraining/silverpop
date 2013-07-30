@@ -53,7 +53,7 @@ module Silverpop
       "<Envelope><Body><RESULT>"+
         "<SUCCESS>TRUE</SUCCESS>"+
         "<JOB_ID>789052</JOB_ID>"+
-        "<JOB_STATUS>RUNNING</JOB_STATUS>"+            
+        "<JOB_STATUS>RUNNING</JOB_STATUS>"+
       "</RESULT></Body></Envelope>"
     end
 
@@ -61,7 +61,7 @@ module Silverpop
       "<Envelope><Body><RESULT>"+
         "<SUCCESS>TRUE</SUCCESS>"+
         "<JOB_ID>789052</JOB_ID>"+
-        "<JOB_STATUS>WAITING</JOB_STATUS>"+            
+        "<JOB_STATUS>WAITING</JOB_STATUS>"+
       "</RESULT></Body></Envelope>"
     end
 
@@ -69,7 +69,7 @@ module Silverpop
       "<Envelope><Body><RESULT>"+
         "<SUCCESS>TRUE</SUCCESS>"+
         "<JOB_ID>789052</JOB_ID>"+
-        "<JOB_STATUS>COMPLETE</JOB_STATUS>"+            
+        "<JOB_STATUS>COMPLETE</JOB_STATUS>"+
       "</RESULT></Body></Envelope>"
     end
 
@@ -97,7 +97,7 @@ module Silverpop
       let(:url) { "https://api#{ENV['ENGAGE_INSTANCE']}.silverpop.com/XMLAPI" }
       let(:list_id) { 713947 }
 
-      let(:request) do 
+      let(:request) do
         '<Envelope><Body><ExportList>'+
           ('<LIST_ID>%d</LIST_ID>' % list_id)+
           '<EXPORT_TYPE>ALL</EXPORT_TYPE>'+
@@ -124,7 +124,7 @@ module Silverpop
       end
 
       it "sends xml request" do
-        stub_request(:post, url).with(:body => request, 
+        stub_request(:post, url).with(:body => request,
           :headers => {'Content-type' => 'text/xml'}).to_return(:body => response)
 
         @engage = Engage.new
@@ -157,10 +157,10 @@ module Silverpop
         end
 
         it "return csv file" do
-          # etalon_file = File.expand_path('./support/ftp/folder/download/file.csv', 
+          # etalon_file = File.expand_path('./support/ftp/folder/download/file.csv',
           #   File.dirname(__FILE__))
           # @engage.export_list(list_id, fields, destination_file)
-          # 
+          #
           # destination_file.should be_same_file_as(etalon_file)
         end
       end
@@ -197,7 +197,7 @@ module Silverpop
         end
 
         before(:each) do
-          @engage = Engage.new          
+          @engage = Engage.new
           @options = Engage::RawRecipientDataOptions.new.tap do |opt|
             opt.event_date_start = "12/01/2011 00:00:00"
             opt.event_date_end   = "12/02/2011 23:59:00"
@@ -223,11 +223,11 @@ module Silverpop
         end
 
         it "returns csv file" do
-          # etalon_file = File.expand_path('./support/ftp/folder/download/file.csv', 
+          # etalon_file = File.expand_path('./support/ftp/folder/download/file.csv',
           #   File.dirname(__FILE__))
-          # 
+          #
           # @engage.raw_recipient_data_export(@options, destination_file).should be_success
-          # 
+          #
           # destination_file.should be_same_file_as(etalon_file)
         end
       end
@@ -255,7 +255,7 @@ module Silverpop
 
         it "returns zip file" do
           # @engage = Engage.new.tap { |e| e.login }
-          # 
+          #
           # @options = Engage::RawRecipientDataOptions.new.tap do |opt|
           #   opt.event_date_start = "10/06/2013 00:00:00"
           #   opt.event_date_end   = "12/06/2013 23:59:00"
@@ -267,9 +267,9 @@ module Silverpop
           #   opt.columns << "CustomerID"
           #   opt.columns << "Address"
           # end
-          # 
+          #
           # @engage.raw_recipient_data_export(@options, destination_file).should be_success
-          # 
+          #
           # destination_file.size.should == 53
         end
       end
