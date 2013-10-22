@@ -75,7 +75,7 @@ module Silverpop
     private
 
     def on_job_ready(job_id)
-      while ['WAITING', 'RUNNING'].include? (status = get_job_status(job_id))
+      while ['WAITING', 'RUNNING'].include?(status = get_job_status(job_id))
         puts "#{Time.now} Job #{job_id}: #{status}"
         sleep 5
       end
