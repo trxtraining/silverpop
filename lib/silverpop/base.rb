@@ -1,4 +1,4 @@
-require 'logger' 
+require 'logger'
 
 module Silverpop
 
@@ -7,9 +7,8 @@ module Silverpop
   end
 
   class Base
-
     extend Forwardable
-    
+
     def_delegators :'self.class', :url, :ftp_url, :ftp_port, :logger
     def_delegators :'self.class', :username, :password, :ftp_username, :ftp_password
 

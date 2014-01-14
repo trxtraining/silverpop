@@ -52,7 +52,7 @@ ENGAGE
 
 
   Creating the gzipped CSV data file:
-  
+
     csv_file_path = 'LIST_DATA.csv.gz'
     users = User.all()
     Zlib::GzipWriter.open(csv_file_path) do |gz|
@@ -118,7 +118,6 @@ TRANSACT
     campaign_id = 1234567
     sp = Silverpop::Transact.new campaign_id, recipients
     sp.query
-
 
   Transact FTP Sample Usage:
 

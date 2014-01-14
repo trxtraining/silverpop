@@ -1,12 +1,12 @@
 Gem::Specification.new do |s|
   s.name     = "silverpop"
-  s.version  = "1.2.0"
+  s.version  = "1.2.1"
   s.date     = "2013-07-01"
   s.summary  = "Silverpop Engage and Transact API -- Extracted from ShoeDazzle.com, gemified by Billfloat"
   s.email    = "bill@billfloat.com"
   s.homepage = "http://github.com/billfloat/silverpop/tree/master"
   s.description = "Silverpop allows for seamless integration from Ruby with the Engage and Transact API."
-  s.authors  = ["George Truong, Bill Abney, Sergey Gopkalo"]
+  s.authors  = ["George Truong, Bill Abney, Mario Zaizar, Sergey Gopkalo"]
 
   s.has_rdoc = false
   s.rdoc_options = ["--main", "README"]
@@ -22,5 +22,4 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'ftpd'
   s.add_development_dependency 'webmock'
-  s.add_development_dependency 'debugger'
 end
