@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name     = "silverpop"
-  s.version  = "1.2.1"
+  s.version  = "1.2.2"
   s.date     = "2013-07-01"
   s.summary  = "Silverpop Engage and Transact API -- Extracted from ShoeDazzle.com, gemified by Billfloat"
   s.email    = "bill@billfloat.com"
@@ -9,8 +9,8 @@ Gem::Specification.new do |s|
   s.authors  = ["George Truong, Bill Abney, Mario Zaizar, Sergey Gopkalo"]
 
   s.has_rdoc = false
-  s.rdoc_options = ["--main", "README"]
-  s.extra_rdoc_files = ["README"]
+  s.rdoc_options = ["--main", "README.md"]
+  s.extra_rdoc_files = ["README.md"]
 
   s.files         = `git ls-files`.split($\)
   s.executables   = s.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
