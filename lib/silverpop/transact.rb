@@ -93,8 +93,8 @@ module Silverpop
 
     def log_error
       logger.error "Silverpop::Transact Error:   #{error_message}"
-      logger.debug "@xml:\n#{@xml.inspect}"
-      logger.info "@query_doc:\n#{@query_doc.inspect}"
+      logger.error "@xml:\n#{@xml.inspect}"
+      logger.error "@query_doc:\n#{@query_doc.inspect}"
     end
 
     def xml_template(campaign_id, recipients=[], options={})
@@ -123,12 +123,10 @@ module Silverpop
             '<TRANSACTION_ID>%s</TRANSACTION_ID>' % o[:transaction_id] )
       end
 
-      logger.debug "add_recipients(#{recipients.inspect})"
       add_recipients recipients
     end
 
     def xml_recipient(email)
-      logger.debug "xml_recipient(#{email.inspect})"
 
       ( "\n" + '<RECIPIENT>'+
           '<EMAIL>%s</EMAIL>'+
@@ -138,7 +136,6 @@ module Silverpop
     end
 
     def xml_recipient_personalization(personalization)
-      logger.debug "xml_recipient_personalization(#{personalization.inspect})"
 
       tag_name = personalization[:tag_name]
       value = personalization[:value]
