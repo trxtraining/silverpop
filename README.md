@@ -84,6 +84,43 @@ ENGAGE
 
     api.logout
 
+  Send out a mailing to a preconfigured list:
+  
+  ```Ruby
+  
+    #this sets up some reasonable defaults
+    Silverpop::Engage.configure do |config|
+      config.mailing_base_name = 'Testing Automated emails'
+      config.mailing_senders_name = 'Test Testerson'
+      config.mailing_from_email = 'test.testerson@example.com'
+      config.mailing_reply_to = 'test.testerson@example.com'
+      config.mailing_parent_folder_path = 'Sent_Tests/Automated_Tests'
+      config.mailing_visibility = '1'
+    end
+    
+    minimum_parameters = {'TEMPLATE_ID' => '11945780',
+                          'LIST_ID' => '5988165',
+                          'SUBJECT' => 'This is a test email, please ignore.'}
+    hash_of_substitutions = {'SUB1'=>'VAL1', 'SUB2' => 'VAL2', 'SUB3'=>'VAL3'}
+    array_of_suppression_lists = ['123123','345345']
+    
+    engage.send_mailing({minimum_parameters,hash_of_substitutions,array_of_suppression_lists)
+          end
+  ```
+  
+  Execute a designated command
+  
+  ```Ruby
+    
+    command = 'GetListMetaData'
+    hash_of_params = {'LIST_ID' => '12345'}
+     
+    engage.post_request(command,hash_of_params)
+    engage.result['NAME']  # => 'Test3'
+    
+  ```
+  
+  
 
   Other:
 

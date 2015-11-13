@@ -231,7 +231,75 @@ module Silverpop
           # destination_file.should be_same_file_as(etalon_file)
         end
       end
+
+
+      describe "#send_mailing" do
+
+        let(:engage){Engage.new}
+        let(:url) { "https://api#{ENV['ENGAGE_INSTANCE']}.silverpop.com/XMLAPI" }
+        let(:response) do
+          %Q{<Envelope>
+  <Body>
+   <RESULT>
+     <SUCCESS>TRUE</SUCCESS>
+     <MAILING_ID>9700</MAILING_ID>
+   </RESULT>
+   </Body>
+</Envelope>
+  }
+        end
+        before :each do
+          Silverpop.configure do |config|
+            config.setup_urls(ENV['ENGAGE_INSTANCE'])
+          end
+          Silverpop::Engage.configure do |config|
+            config.mailing_base_name = 'Testing Automated emails'
+            config.mailing_senders_name = 'Test Testerson'
+            config.mailing_from_email = 'test.testerson@example.com'
+            config.mailing_reply_to = 'test.testerson@example.com'
+            config.mailing_parent_folder_path = 'Sent_Tests/Automated_Tests'
+            config.mailing_visibility = '1'
+          end
+
+          stub_request(:post, url).with(:headers => {'Content-type' => 'text/xml'}).to_return(:body => response)
+          engage.send_mailing({'TEMPLATE_ID' => '11945780',
+                               'LIST_ID' => '5988165',
+                               'SUBJECT' => 'This is a test email, please ignore.'},
+                              {'SUB1'=>'VAL1', 'SUB2' => 'VAL2', 'SUB3'=>'VAL3'},
+                              ['5988585'])
+        end
+
+      #  it "converts a hash to xml" do
+      #    expect(engage.send(:to_xml, {"Test" => {'SUBS'=>["sub1","sub2"]}})).to eq "<Envelope><Test><SUBS><SUB><sub1></SUB><SUB>sub2</SUB></SUBS></Test></Envelope>"
+      #  end
+
+        it 'sends a mailing' do
+          expect(engage.success?).to be true
+        end
+
+        it 'posts to silverpop' do
+          expect(a_request(:post, url).
+                     with(:body => /<TEMPLATE_ID>11945780<\/TEMPLATE_ID>\s*<LIST_ID>5988165<\/LIST_ID>\s*<SUBJECT>This is a test email, please ignore.<\/SUBJECT>/)).
+              to have_been_made.once
+        end
+
+        it 'generates a unique name for the mailing' do
+          expect(a_request(:post, url).
+                     with(:body => /<MAILING_NAME>Testing Automated emails-\d*<\/MAILING_NAME>/)).
+              to have_been_made.once
+        end
+
+        it "has response_xml" do
+          expect(engage.response_xml).to match /<MAILING_ID>9700<\/MAILING_ID>/
+        end
+
+        it "has a result hash" do
+          expect(engage.result['MAILING_ID']).to eq '9700'
+        end
+
+      end
     end
+
 
     describe "Remote tests", :remote => true do
 

@@ -1,13 +1,18 @@
 require 'active_support/core_ext/object/blank'
 require 'ostruct'
+require 'active_support/core_ext/hash'
 
 module Silverpop
 
   class Engage < Silverpop::Base
+    def self.configure
+      yield(self)
+    end
 
     class << self
       attr_accessor :url, :username, :password
       attr_accessor :ftp_url, :ftp_port, :ftp_username, :ftp_password
+      attr_accessor :mailing_base_name, :mailing_senders_name, :mailing_from_email, :mailing_reply_to, :mailing_parent_folder_path, :mailing_visibility
     end
 
     def initialize
@@ -34,6 +39,16 @@ module Silverpop
       return false if success?
       doc = Hpricot::XML(@response_xml)
       strip_cdata( doc.at('FaultString').innerHTML )
+    end
+
+    def response_xml
+      return false unless success?
+      doc = Hpricot::XML(@response_xml)
+      strip_cdata( doc.at('RESULT').to_s )
+    end
+
+    def result
+      Hash.from_xml(@response_xml)['Envelope']['Body']['RESULT']
     end
 
     ###
@@ -116,6 +131,8 @@ module Silverpop
                               File.basename(map_file_path),
                               File.basename(source_file_path) )
     end
+
+
 
     class RawRecipientDataOptions < OpenStruct
       def initialize
@@ -295,11 +312,58 @@ module Silverpop
       response_xml = query xml_associate_relational_table(list_id, table_id, field_mappings)
     end
 
+  ####
+  # Send Mailing
   ###
-  #   API XML TEMPLATES
-  ###
+    def send_mailing(params={},substitutions={},suppression_lists=[])
+      unless params.all?{|key,value| %w[TEMPLATE_ID LIST_ID SUBJECT].include?(key)}
+        raise Silverpop::MissingParametersError.new("missing required parameter: 'TEMPLATE_ID', 'LIST_ID', or 'SUBJECT'")
+      end
+      mailing_params = mailing_defaults.merge({'MAILING_NAME'  => generate_mailing_name,
+                                               'SUPPRESSION_LISTS' => suppression_lists,
+                                               'SUBSTITUTIONS' => substitutions.map{ |key,val| {'NAME' => key, 'VALUE' => val } }
+                                              })
+      mailing_params.merge!(params)
+      post_request('ScheduleMailing',mailing_params)
+    end
+
+    def post_request(command,params)
+      xml = {'Body' => {command.to_s => params}}.to_xml(:root=>'Envelope', :skip_types => true, :dasherize => false)
+      query(xml)
+      success?
+    end
+
+
+
   protected
-  
+
+    ####
+    # Send Mailings
+    ####
+
+    def mailing_defaults
+      {
+          'FROM_NAME'  => self.class.mailing_senders_name,
+          'FROM_ADDRESS'  => self.class.mailing_from_email,
+          'REPLY_TO' => self.class.mailing_reply_to,
+          'PARENT_FOLDER_PATH' => self.class.mailing_parent_folder_path,
+          'VISIBILITY' => self.class.mailing_visibility,
+          'SEND_HTML' => nil,
+          'SEND_AOL' => nil,
+          'SEND_TEXT' => nil,
+          'CREATE_PARENT_FOLDER' => nil
+      }
+    end
+
+    def generate_mailing_name
+      self.class.mailing_base_name + Time.now.strftime('-%Y%m%d%H%M%S%L')
+    end
+
+
+    ###
+    #   API XML TEMPLATES
+    ###
+
     def map_type(type) # some API calls want a number, some want a name. This maps the name back to the number
       {
         "TEXT" => 0,
@@ -690,5 +754,7 @@ module Silverpop
         '<TABLE_FIELD>%s</TABLE_FIELD>'+
       '</MAP_FIELD>') % [mapping[:list_name], mapping[:table_name]]
     end
+
+
   end
 end
