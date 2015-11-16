@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    silverpop (1.3.1)
+    silverpop (1.3.2)
 
 GEM
   remote: https://rubygems.org/
