@@ -6,5 +6,5 @@ gem 'rspec'
 gem 'hpricot'
 gem 'activesupport'
 gem 'rainbow'
-
+gem 'builder'
 

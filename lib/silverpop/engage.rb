@@ -107,6 +107,8 @@ module Silverpop
       response_xml = query( xml_get_lists(visibility, list_type) )
     end
 
+
+
     def get_list(id, fields)
       response_xml = query( xml_export_list(id, fields) )
     end
@@ -316,7 +318,7 @@ module Silverpop
   # Send Mailing
   ###
     def send_mailing(params={},substitutions={},suppression_lists=[])
-      unless params.all?{|key,value| %w[TEMPLATE_ID LIST_ID SUBJECT].include?(key)}
+      unless %w[TEMPLATE_ID LIST_ID SUBJECT].all?{|key| params[key]}
         raise Silverpop::MissingParametersError.new("missing required parameter: 'TEMPLATE_ID', 'LIST_ID', or 'SUBJECT'")
       end
       mailing_params = mailing_defaults.merge({'MAILING_NAME'  => generate_mailing_name,
