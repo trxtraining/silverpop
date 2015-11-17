@@ -317,11 +317,11 @@ module Silverpop
   ####
   # Send Mailing
   ###
-    def send_mailing(params={},substitutions={},suppression_lists=[])
+    def send_mailing(params={},substitutions={},suppression_lists=[], mailing_base_name=nil)
       unless %w[TEMPLATE_ID LIST_ID SUBJECT].all?{|key| params[key]}
         raise Silverpop::MissingParametersError.new("missing required parameter: 'TEMPLATE_ID', 'LIST_ID', or 'SUBJECT'")
       end
-      mailing_params = mailing_defaults.merge({'MAILING_NAME'  => generate_mailing_name,
+      mailing_params = mailing_defaults.merge({'MAILING_NAME'  => generate_mailing_name(mailing_base_name),
                                                'SUPPRESSION_LISTS' => suppression_lists,
                                                'SUBSTITUTIONS' => substitutions.map{ |key,val| {'NAME' => key, 'VALUE' => val } }
                                               })
@@ -357,8 +357,8 @@ module Silverpop
       }
     end
 
-    def generate_mailing_name
-      self.class.mailing_base_name + Time.now.strftime('-%Y%m%d%H%M%S%L')
+    def generate_mailing_name(base_name=nil)
+      (base_name ? base_name : self.class.mailing_base_name) + Time.now.strftime('-%Y%m%d%H%M%S%L')
     end
 
 
