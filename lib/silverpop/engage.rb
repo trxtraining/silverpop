@@ -71,7 +71,7 @@ module Silverpop
     end
 
     def logout
-      return true unless logged_in?rm
+      return true unless logged_in?
 
       response_xml = query( xml_logout )
       success?
